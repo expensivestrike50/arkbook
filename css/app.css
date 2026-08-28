@@ -290,8 +290,20 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 }
 .bar{
   width:3px;border-radius:99px;background:#53505b;opacity:.72;
+  transform-origin:center;
+  animation:wave-bounce 1.1s ease-in-out infinite;
+  animation-delay:calc(var(--i,0) * -0.06s);
+  animation-play-state:paused;
 }
 .bar.played{background:linear-gradient(180deg,#9e4efc,#7d43df);opacity:1}
+.wave.playing .bar{animation-play-state:running}
+@keyframes wave-bounce{
+  0%,100%{transform:scaleY(.55)}
+  50%{transform:scaleY(1)}
+}
+@media (prefers-reduced-motion:reduce){
+  .bar{animation:none}
+}
 .wave-times{display:flex;justify-content:space-between;color:#bbb8c2;font-size:10px;margin-top:-3px}
 
 /* EPISODES */
@@ -668,6 +680,40 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast svg{width:15px;color:#7fe1a3}
+
+/* FULL SCREEN PLAYER */
+.fs-open-btn{width:34px;height:34px;border-radius:8px;border:0;background:transparent;display:grid;place-items:center;color:#aaa7b5;cursor:pointer}
+.fs-open-btn:hover{background:rgba(255,255,255,.06);color:#fff}
+.fs-open-btn svg{width:17px}
+.fs-player{
+  position:fixed;inset:0;z-index:150;display:none;place-items:center;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(103,62,189,.22), transparent 45%),
+    linear-gradient(180deg,#0c0d16 0%, #08090f 100%);
+}
+.fs-player.open{display:grid}
+.fs-close{
+  position:absolute;top:24px;left:24px;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);
+  background:#131420;color:#cfc9df;display:grid;place-items:center;cursor:pointer;
+}
+.fs-close svg{width:18px}
+.fs-inner{width:min(420px,88vw);display:flex;flex-direction:column;align-items:center;text-align:center}
+.fs-art{
+  width:min(320px,72vw);height:min(320px,72vw);border-radius:20px;margin-bottom:32px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08);
+}
+.fs-wave{height:64px;display:flex;align-items:center;justify-content:center;gap:2px;width:100%;margin-bottom:28px;overflow:hidden}
+.fs-wave .bar{width:3px;border-radius:99px;background:#53505b}
+.fs-wave.playing .bar{animation-play-state:running;background:linear-gradient(180deg,#9e4efc,#7d43df)}
+.fs-meta{margin-bottom:30px}
+.fs-meta h2{font-family:"Playfair Display",serif;font-size:22px;margin:0 0 8px;color:#fff}
+.fs-meta p{font-size:12px;color:#b9a7d7;margin:0}
+.fs-progress{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:26px}
+.fs-controls{display:flex;align-items:center;gap:26px}
+.fs-controls .play-lg{width:60px;height:60px;flex:0 0 60px}
+.fs-controls .play-lg svg{width:24px}
+.fs-controls .small-skip svg{width:24px}
+.fs-controls .small-skip small{left:11px;top:11px}
 
 /* AUTH PAGES */
 .auth-wrap{

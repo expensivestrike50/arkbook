@@ -41,12 +41,12 @@
 
             <div class="hero-player">
               <button class="play-lg play-toggle" aria-label="Play"><i data-lucide="play"></i></button>
-              <button class="skip-btn"><i data-lucide="rotate-ccw"></i><small>15</small></button>
+              <button class="skip-btn" data-skip="-15"><i data-lucide="rotate-ccw"></i><small>15</small></button>
               <div class="wave-wrap">
-                <div class="wave" id="wave"></div>
-                <div class="wave-times"><span id="heroTime">0:00</span><span>2:50</span></div>
+                <div class="wave progress-track" id="wave"></div>
+                <div class="wave-times"><span class="time-current">0:00</span><span class="time-duration">2:50</span></div>
               </div>
-              <button class="skip-btn"><i data-lucide="rotate-cw"></i><small>15</small></button>
+              <button class="skip-btn" data-skip="15"><i data-lucide="rotate-cw"></i><small>15</small></button>
             </div>
           </article>
 
@@ -117,8 +117,9 @@
       const heights = [12,18,23,30,19,35,42,29,47,36,55,42,31,48,57,38,28,44,39,51,34,25,19,33,41,29,22,18,26,35,20,17,28,24,18,22,13,18,25,16,11,20,16,13,18,12,10,14,8,13,11,9,12,7,10,8,6,10,7,8,6,9,5,7,6,8,5,6,5,7,5,6,4,5,4,6,4,5,3,4];
       heights.forEach((h, idx) => {
         const b = document.createElement("span");
-        b.className = "bar" + (idx < 28 ? " played" : "");
+        b.className = "bar";
         b.style.height = Math.max(6,h) + "%";
+        b.style.setProperty("--i", idx);
         wave.appendChild(b);
       });
 

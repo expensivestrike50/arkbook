@@ -62,22 +62,48 @@
 
   function playerHTML(){
     return (
-      '<div class="now-playing">' +
+      '<div class="now-playing" id="nowPlayingOpen" style="cursor:pointer">' +
         '<div class="now-cover img-cross-sm" id="nowCover"></div>' +
         '<div class="now-text"><strong id="nowTitle">Don’t Become What Hurt You</strong><span id="nowVerse">Romans 12:21</span></div>' +
       '</div>' +
       '<div class="player-center">' +
-        '<button class="small-skip" id="skipBackBottom"><i data-lucide="rotate-ccw"></i><small>15</small></button>' +
+        '<button class="small-skip" data-skip="-15"><i data-lucide="rotate-ccw"></i><small>15</small></button>' +
         '<button class="round-play play-toggle"><i data-lucide="play"></i></button>' +
-        '<button class="small-skip" id="skipFwdBottom"><i data-lucide="rotate-cw"></i><small>15</small></button>' +
+        '<button class="small-skip" data-skip="15"><i data-lucide="rotate-cw"></i><small>15</small></button>' +
         '<div class="progress-zone">' +
-          '<span class="time" id="bottomCurrent">00:00</span>' +
-          '<div class="track" id="track"><div class="track-fill" id="trackFill"></div></div>' +
-          '<span class="time" id="bottomDuration">02:03</span>' +
+          '<span class="time time-current">00:00</span>' +
+          '<div class="track progress-track"><div class="track-fill"></div></div>' +
+          '<span class="time time-duration">02:03</span>' +
         '</div>' +
       '</div>' +
-      '<div class="player-right"><i data-lucide="volume-2"></i><i data-lucide="list-music"></i></div>' +
+      '<div class="player-right">' +
+        '<i data-lucide="volume-2"></i>' +
+        '<button class="fs-open-btn" id="fsOpenBtn" title="Full screen player"><i data-lucide="maximize-2"></i></button>' +
+      '</div>' +
       '<audio id="bbAudio" preload="metadata" style="display:none"></audio>'
+    );
+  }
+
+  function fsPlayerHTML(){
+    return (
+      '<div class="fs-player" id="fsPlayer">' +
+        '<button class="fs-close" id="fsCloseBtn"><i data-lucide="chevron-down"></i></button>' +
+        '<div class="fs-inner">' +
+          '<div class="fs-art img-cross" id="fsArt"></div>' +
+          '<div class="fs-wave" id="fsWave"></div>' +
+          '<div class="fs-meta"><h2 id="fsTitle">Don’t Become What Hurt You</h2><p id="fsVerse">Romans 12:21</p></div>' +
+          '<div class="fs-progress">' +
+            '<span class="time time-current">00:00</span>' +
+            '<div class="track progress-track"><div class="track-fill"></div></div>' +
+            '<span class="time time-duration">02:03</span>' +
+          '</div>' +
+          '<div class="fs-controls">' +
+            '<button class="small-skip" data-skip="-15"><i data-lucide="rotate-ccw"></i><small>15</small></button>' +
+            '<button class="play-lg play-toggle"><i data-lucide="play"></i></button>' +
+            '<button class="small-skip" data-skip="15"><i data-lucide="rotate-cw"></i><small>15</small></button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
     );
   }
 
@@ -197,44 +223,85 @@
 
   /* ------------------------------ Bottom player ---------------------------
      Two modes: "demo" simulates progress with a timer for the built in
-     episodes that have no real audio file. "real" plays an actual uploaded
-     audio file through the hidden <audio> element. */
+     episodes that have no real audio file. "real" plays an actual audio
+     file (shipped with the site, or uploaded) through the hidden <audio>
+     element. Every control that carries the shared classes below — in the
+     bottom bar and in the full screen view — stays in sync automatically,
+     since they all read from and act on this one piece of state. */
+  const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+
   function wirePlayer(){
     const state = { playing:false, progress:32, duration:123, mode:"demo" };
     let timer = null;
-    const fill = document.getElementById("trackFill");
-    const cur = document.getElementById("bottomCurrent");
-    const dur = document.getElementById("bottomDuration");
     const audioEl = document.getElementById("bbAudio");
-    if(!fill) return;
+    if(!audioEl) return;
+
+    function fillsAndTimes(){
+      return {
+        fills: document.querySelectorAll(".track-fill"),
+        curs: document.querySelectorAll(".time-current"),
+        durs: document.querySelectorAll(".time-duration")
+      };
+    }
+
+    function paintWave(pct, isPlaying){
+      const wave = document.getElementById("wave");
+      if(wave){
+        wave.classList.toggle("playing", isPlaying);
+        const bars = wave.querySelectorAll(".bar");
+        const playedCount = Math.round(bars.length * pct/100);
+        bars.forEach((b,i) => b.classList.toggle("played", i < playedCount));
+      }
+      const fsWave = document.getElementById("fsWave");
+      if(fsWave) fsWave.classList.toggle("playing", isPlaying);
+    }
+
+    function paint(pct, curSeconds, durSeconds, isPlaying){
+      const { fills, curs, durs } = fillsAndTimes();
+      fills.forEach(el => el.style.width = pct + "%");
+      curs.forEach(el => el.textContent = fmtTime(curSeconds));
+      durs.forEach(el => el.textContent = fmtTime(durSeconds));
+      document.querySelectorAll(".play-toggle").forEach(btn => {
+        btn.innerHTML = '<i data-lucide="' + (isPlaying ? "pause" : "play") + '"></i>';
+      });
+      if(window.lucide) lucide.createIcons();
+      paintWave(pct, isPlaying);
+    }
 
     function updateDemo(){
       const pct = Math.min(100, state.progress/state.duration*100);
-      fill.style.width = pct + "%";
-      cur.textContent = fmtTime(state.progress);
-      dur.textContent = fmtTime(state.duration);
-      paintToggle(state.playing);
+      paint(pct, state.progress, state.duration, state.playing);
     }
 
     function updateReal(){
       const d = audioEl.duration || 0;
       const pct = d ? (audioEl.currentTime/d*100) : 0;
-      fill.style.width = pct + "%";
-      cur.textContent = fmtTime(audioEl.currentTime || 0);
-      dur.textContent = fmtTime(d);
-      paintToggle(!audioEl.paused);
+      paint(pct, audioEl.currentTime || 0, d, !audioEl.paused);
     }
 
-    function paintToggle(isPlaying){
-      document.querySelectorAll(".play-toggle").forEach(btn => {
-        btn.innerHTML = '<i data-lucide="' + (isPlaying ? "pause" : "play") + '"></i>';
-      });
-      if(window.lucide) lucide.createIcons();
+    function seekTo(frac){
+      if(state.mode === "real"){
+        if(audioEl.duration) audioEl.currentTime = Math.max(0, Math.min(1,frac)) * audioEl.duration;
+        updateReal();
+      } else {
+        state.progress = Math.round(Math.max(0, Math.min(1,frac)) * state.duration);
+        updateDemo();
+      }
+    }
+
+    function skip(seconds){
+      if(state.mode === "real"){
+        audioEl.currentTime = Math.max(0, Math.min(audioEl.duration||0, audioEl.currentTime+seconds));
+        updateReal();
+      } else {
+        state.progress = Math.max(0, Math.min(state.duration, state.progress+seconds));
+        updateDemo();
+      }
     }
 
     window.togglePlay = function(){
       if(state.mode === "real"){
-        if(audioEl.paused) audioEl.play(); else audioEl.pause();
+        if(audioEl.paused) audioEl.play().catch(()=>{}); else audioEl.pause();
         return;
       }
       state.playing = !state.playing;
@@ -250,42 +317,31 @@
     };
 
     document.querySelectorAll(".play-toggle").forEach(btn => btn.addEventListener("click", window.togglePlay));
+    document.querySelectorAll("[data-skip]").forEach(btn => btn.addEventListener("click", () => skip(+btn.dataset.skip)));
+    document.querySelectorAll(".progress-track").forEach(track => track.addEventListener("click", (e) => {
+      const rect = track.getBoundingClientRect();
+      seekTo((e.clientX-rect.left)/rect.width);
+    }));
 
     ["timeupdate","play","pause","ended","loadedmetadata"].forEach(ev => {
       audioEl.addEventListener(ev, () => { if(state.mode === "real") updateReal(); });
     });
 
-    const track = document.getElementById("track");
-    if(track) track.addEventListener("click", (e) => {
-      const rect = track.getBoundingClientRect();
-      const frac = (e.clientX-rect.left)/rect.width;
-      if(state.mode === "real"){
-        if(audioEl.duration) audioEl.currentTime = frac * audioEl.duration;
-        updateReal();
-      } else {
-        state.progress = Math.round(frac * state.duration);
-        updateDemo();
-      }
-    });
-
-    const skipBack = document.getElementById("skipBackBottom");
-    const skipFwd = document.getElementById("skipFwdBottom");
-    if(skipBack) skipBack.addEventListener("click", ()=>{
-      if(state.mode === "real"){ audioEl.currentTime = Math.max(0,audioEl.currentTime-15); updateReal(); }
-      else { state.progress = Math.max(0,state.progress-15); updateDemo(); }
-    });
-    if(skipFwd) skipFwd.addEventListener("click", ()=>{
-      if(state.mode === "real"){ audioEl.currentTime = Math.min(audioEl.duration||0,audioEl.currentTime+15); updateReal(); }
-      else { state.progress = Math.min(state.duration,state.progress+15); updateDemo(); }
-    });
-
     /* seconds: play the built in simulated demo track.
        audioSrc: play a real audio file (a static URL or an uploaded blob
        object URL). autoplay defaults to true; pass false to just load and
-       show the right duration without starting playback. */
-    window.setNowPlaying = function(title, verse, seconds, audioSrc, autoplay){
-      document.getElementById("nowTitle").textContent = title;
-      document.getElementById("nowVerse").textContent = verse;
+       show the right duration without starting playback. img is one of
+       the theme keys (cross, sprout, heart, door, mountain). */
+    window.setNowPlaying = function(title, verse, seconds, audioSrc, autoplay, img){
+      ["nowTitle","fsTitle"].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = title; });
+      ["nowVerse","fsVerse"].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = verse; });
+      const bigCls = iconClass[img] || "img-cross";
+      const smallCls = img === "cross" ? "img-cross-sm" : bigCls;
+      const cover = document.getElementById("nowCover");
+      if(cover) cover.className = "now-cover " + smallCls;
+      const art = document.getElementById("fsArt");
+      if(art) art.className = "fs-art " + bigCls;
+
       clearInterval(timer);
       audioEl.pause();
 
@@ -314,16 +370,59 @@
      starting playback (used to prime the home page hero on load). */
   window.playEpisode = async function(ep, autoplay){
     if(ep.audioUrl){
-      window.setNowPlaying(ep.title, ep.verse, null, ep.audioUrl, autoplay);
+      window.setNowPlaying(ep.title, ep.verse, null, ep.audioUrl, autoplay, ep.img);
     } else if(ep.audioId){
       const blob = await B.Audio.get(ep.audioId);
       if(!blob){ showToast("Audio not found in this browser", "alert-circle"); return; }
       const url = URL.createObjectURL(blob);
-      window.setNowPlaying(ep.title, ep.verse, null, url, autoplay);
+      window.setNowPlaying(ep.title, ep.verse, null, url, autoplay, ep.img);
     } else {
-      window.setNowPlaying(ep.title, ep.verse, ep.seconds);
+      window.setNowPlaying(ep.title, ep.verse, ep.seconds, null, true, ep.img);
     }
   };
+
+  /* ------------------------------ Full screen view ------------------------- */
+  function renderFsWaveBars(){
+    const wave = document.getElementById("fsWave");
+    if(!wave || wave.children.length) return;
+    for(let i=0;i<56;i++){
+      const b = document.createElement("span");
+      const h = Math.round(18 + Math.abs(Math.sin(i*0.7)) * 60);
+      b.className = "bar";
+      b.style.height = h + "%";
+      b.style.setProperty("--i", i);
+      wave.appendChild(b);
+    }
+  }
+
+  function wireFullscreen(){
+    const fs = document.getElementById("fsPlayer");
+    const openBtn = document.getElementById("fsOpenBtn");
+    const nowPlaying = document.getElementById("nowPlayingOpen");
+    const closeBtn = document.getElementById("fsCloseBtn");
+    if(!fs || !openBtn) return;
+
+    renderFsWaveBars();
+
+    function open(){
+      fs.classList.add("open");
+      if(document.documentElement.requestFullscreen){
+        document.documentElement.requestFullscreen().catch(()=>{});
+      }
+    }
+    function close(){
+      fs.classList.remove("open");
+      if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+    }
+
+    openBtn.addEventListener("click", open);
+    if(nowPlaying) nowPlaying.addEventListener("click", open);
+    closeBtn.addEventListener("click", close);
+    document.addEventListener("fullscreenchange", () => {
+      if(!document.fullscreenElement) fs.classList.remove("open");
+    });
+    window.addEventListener("keydown", (e) => { if(e.key === "Escape" && fs.classList.contains("open")) close(); });
+  }
 
   /* ------------------------------ Modals ---------------------------------- */
   function openModal(id){ document.getElementById(id).classList.add("open"); }
@@ -413,6 +512,7 @@
       document.getElementById("sidebarMount").innerHTML = sidebarHTML(activeKey, user);
       document.getElementById("topbarMount").innerHTML = topbarHTML();
       document.getElementById("playerMount").innerHTML = playerHTML();
+      document.body.insertAdjacentHTML("beforeend", fsPlayerHTML());
       document.body.insertAdjacentHTML("beforeend", modalsHTML());
 
       const slot = document.getElementById("topActionSlot");
@@ -439,6 +539,7 @@
       wireModals();
       wireSearch();
       wirePlayer();
+      wireFullscreen();
 
       if(window.lucide) lucide.createIcons();
       return user;
