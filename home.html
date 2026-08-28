@@ -33,7 +33,7 @@
                 <h1>Don’t Become What<br>Hurt You</h1>
                 <div class="meta">
                   <span><i data-lucide="book-open"></i>Romans 12:21</span>
-                  <span><i data-lucide="clock-3"></i>2:03</span>
+                  <span><i data-lucide="clock-3"></i>2:50</span>
                 </div>
                 <p>What happened to you should teach you, not turn you into someone you were never meant to become.</p>
               </div>
@@ -44,7 +44,7 @@
               <button class="skip-btn"><i data-lucide="rotate-ccw"></i><small>15</small></button>
               <div class="wave-wrap">
                 <div class="wave" id="wave"></div>
-                <div class="wave-times"><span id="heroTime">00:32</span><span>02:33</span></div>
+                <div class="wave-times"><span id="heroTime">0:00</span><span>2:50</span></div>
               </div>
               <button class="skip-btn"><i data-lucide="rotate-cw"></i><small>15</small></button>
             </div>
@@ -166,6 +166,11 @@
       }
       renderEpisodes();
       window.onDataChanged = renderEpisodes;
+
+      // preload today's devotional so the hero and bottom player already
+      // show its real duration, ready to play without an extra click
+      const todaysEpisode = B.EPISODES.find(e => e.id === "ep1");
+      if(todaysEpisode) window.playEpisode(todaysEpisode, false);
 
       // scripture network preview (Forgiveness topic)
       const topic = B.getTopic("forgiveness");

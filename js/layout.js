@@ -280,8 +280,10 @@
     });
 
     /* seconds: play the built in simulated demo track.
-       audioSrc: play a real uploaded audio file at this object URL. */
-    window.setNowPlaying = function(title, verse, seconds, audioSrc){
+       audioSrc: play a real audio file (a static URL or an uploaded blob
+       object URL). autoplay defaults to true; pass false to just load and
+       show the right duration without starting playback. */
+    window.setNowPlaying = function(title, verse, seconds, audioSrc, autoplay){
       document.getElementById("nowTitle").textContent = title;
       document.getElementById("nowVerse").textContent = verse;
       clearInterval(timer);
@@ -291,7 +293,7 @@
         state.mode = "real";
         audioEl.src = audioSrc;
         audioEl.currentTime = 0;
-        audioEl.play().catch(()=>{});
+        if(autoplay !== false) audioEl.play().catch(()=>{});
         updateReal();
       } else {
         state.mode = "demo";
@@ -306,14 +308,18 @@
     updateDemo();
   }
 
-  /* Plays any episode object in the bottom player: a real uploaded file
-     if it has one, otherwise the built in demo simulation. */
-  window.playEpisode = async function(ep){
-    if(ep.audioId){
+  /* Plays any episode object in the bottom player: a shipped static audio
+     file if it has one, a real uploaded file if it has one, otherwise the
+     built in demo simulation. Pass autoplay:false to preload without
+     starting playback (used to prime the home page hero on load). */
+  window.playEpisode = async function(ep, autoplay){
+    if(ep.audioUrl){
+      window.setNowPlaying(ep.title, ep.verse, null, ep.audioUrl, autoplay);
+    } else if(ep.audioId){
       const blob = await B.Audio.get(ep.audioId);
       if(!blob){ showToast("Audio not found in this browser", "alert-circle"); return; }
       const url = URL.createObjectURL(blob);
-      window.setNowPlaying(ep.title, ep.verse, null, url);
+      window.setNowPlaying(ep.title, ep.verse, null, url, autoplay);
     } else {
       window.setNowPlaying(ep.title, ep.verse, ep.seconds);
     }

@@ -195,7 +195,7 @@
   /* --------------------------- Static content --------------------------- */
 
   const EPISODES = [
-    { id:"ep1", title:"Don’t Become What Hurt You", verse:"Romans 12:21", duration:"2:03", seconds:123, date:"2025-05-28", topic:"forgiveness", img:"cross", desc:"What happened to you should teach you, not turn you into someone you were never meant to become." },
+    { id:"ep1", title:"Don’t Become What Hurt You", verse:"Romans 12:21", duration:"2:50", seconds:170, date:"2025-05-28", topic:"forgiveness", img:"cross", desc:"What happened to you should teach you, not turn you into someone you were never meant to become.", audioUrl:"assets/audio/dont-become-what-hurt-you.mp3" },
     { id:"ep2", title:"When God Makes You Wait", verse:"Psalm 27:14", duration:"2:11", seconds:131, date:"2025-05-27", topic:"waiting", img:"sprout", desc:"Waiting is not wasted time. It is where God builds what a rushed answer never could." },
     { id:"ep3", title:"Guard Your Heart", verse:"Proverbs 4:23", duration:"1:58", seconds:118, date:"2025-05-26", topic:"trust", img:"heart", desc:"Everything you do flows from your heart. Protecting it is not selfish, it is wise." },
     { id:"ep4", title:"Forgiveness Doesn’t Mean Access", verse:"Ephesians 4:31–32", duration:"2:07", seconds:127, date:"2025-05-25", topic:"forgiveness", img:"door", desc:"You can release someone from bitterness without reopening a door that hurt you." },
