@@ -36,7 +36,7 @@
       '<nav class="nav">' + navItems + '</nav>' +
       '<div class="profile" id="profileToggle">' +
         '<div class="avatar">' + initials(user.name) + '</div>' +
-        '<div class="profile-text"><strong>' + B.escapeHtml(user.name) + '</strong><span>Walk by Faith</span></div>' +
+        '<div class="profile-text"><strong>' + B.escapeHtml(user.name) + '</strong></div>' +
         '<i class="chev" data-lucide="chevron-down"></i>' +
         '<div class="profile-menu" id="profileMenu">' +
           '<button id="signOutBtn"><i data-lucide="log-out"></i>Sign out</button>' +
@@ -79,9 +79,14 @@
       '<div class="player-right">' +
         '<i data-lucide="volume-2"></i>' +
         '<button class="fs-open-btn" id="fsOpenBtn" title="Full screen player"><i data-lucide="maximize-2"></i></button>' +
+        '<button class="fs-open-btn" id="playerHideBtn" title="Hide player"><i data-lucide="chevron-down"></i></button>' +
       '</div>' +
       '<audio id="bbAudio" preload="metadata" style="display:none"></audio>'
     );
+  }
+
+  function playerTabHTML(){
+    return '<button class="player-tab" id="playerShowBtn" title="Show player"><i data-lucide="chevron-up"></i></button>';
   }
 
   function fsPlayerHTML(){
@@ -424,6 +429,27 @@
     window.addEventListener("keydown", (e) => { if(e.key === "Escape" && fs.classList.contains("open")) close(); });
   }
 
+  /* Lets you tuck the bottom player out of the way, and bring it back with
+     the small tab that stays pinned to the bottom edge while it is hidden. */
+  function wirePlayerVisibility(){
+    const bar = document.getElementById("playerMount");
+    const hideBtn = document.getElementById("playerHideBtn");
+    const showBtn = document.getElementById("playerShowBtn");
+    const app = document.querySelector(".app");
+    if(!bar || !hideBtn || !showBtn) return;
+
+    hideBtn.addEventListener("click", () => {
+      bar.classList.add("collapsed");
+      showBtn.classList.add("show");
+      if(app) app.classList.add("player-collapsed");
+    });
+    showBtn.addEventListener("click", () => {
+      bar.classList.remove("collapsed");
+      showBtn.classList.remove("show");
+      if(app) app.classList.remove("player-collapsed");
+    });
+  }
+
   /* ------------------------------ Modals ---------------------------------- */
   function openModal(id){ document.getElementById(id).classList.add("open"); }
   function closeModal(id){ document.getElementById(id).classList.remove("open"); }
@@ -513,6 +539,7 @@
       document.getElementById("topbarMount").innerHTML = topbarHTML();
       document.getElementById("playerMount").innerHTML = playerHTML();
       document.body.insertAdjacentHTML("beforeend", fsPlayerHTML());
+      document.body.insertAdjacentHTML("beforeend", playerTabHTML());
       document.body.insertAdjacentHTML("beforeend", modalsHTML());
 
       const slot = document.getElementById("topActionSlot");
@@ -540,6 +567,7 @@
       wireSearch();
       wirePlayer();
       wireFullscreen();
+      wirePlayerVisibility();
 
       if(window.lucide) lucide.createIcons();
       return user;

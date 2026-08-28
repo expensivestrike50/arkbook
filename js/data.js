@@ -269,7 +269,19 @@
     "Galatians 2:20": { ref:"Galatians 2:20", text:"I am crucified with Christ: nevertheless I live; yet not I, but Christ liveth in me: and the life which I now live in the flesh I live by the faith of the Son of God, who loved me, and gave himself for me." },
     "Ephesians 2:10": { ref:"Ephesians 2:10", text:"For we are his workmanship, created in Christ Jesus unto good works, which God hath before ordained that we should walk in them." },
     "1 Peter 2:9": { ref:"1 Peter 2:9", text:"But ye are a chosen generation, a royal priesthood, an holy nation, a peculiar people; that ye should shew forth the praises of him who hath called you out of darkness into his marvellous light." },
-    "Romans 8:16–17": { ref:"Romans 8:16–17", text:"The Spirit itself beareth witness with our spirit, that we are the children of God: And if children, then heirs; heirs of God, and joint-heirs with Christ; if so be that we suffer with him, that we may be also glorified together." }
+    "Romans 8:16–17": { ref:"Romans 8:16–17", text:"The Spirit itself beareth witness with our spirit, that we are the children of God: And if children, then heirs; heirs of God, and joint-heirs with Christ; if so be that we suffer with him, that we may be also glorified together." },
+
+    "2 Timothy 1:7": { ref:"2 Timothy 1:7", text:"For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind." },
+    "1 Corinthians 16:13": { ref:"1 Corinthians 16:13", text:"Watch ye, stand fast in the faith, quit you like men, be strong." },
+    "Psalm 27:1": { ref:"Psalm 27:1", text:"The LORD is my light and my salvation; whom shall I fear? the LORD is the strength of my life; of whom shall I be afraid?" },
+    "Joshua 1:6": { ref:"Joshua 1:6", text:"Be strong and of a good courage: for unto this people shalt thou divide for an inheritance the land, which I sware unto their fathers to give them." },
+    "Psalm 31:24": { ref:"Psalm 31:24", text:"Be of good courage, and he shall strengthen your heart, all ye that hope in the LORD." },
+
+    "1 Thessalonians 5:18": { ref:"1 Thessalonians 5:18", text:"In every thing give thanks: for this is the will of God in Christ Jesus concerning you." },
+    "Psalm 100:4": { ref:"Psalm 100:4", text:"Enter into his gates with thanksgiving, and into his courts with praise: be thankful unto him, and bless his name." },
+    "Colossians 3:17": { ref:"Colossians 3:17", text:"And whatsoever ye do in word or deed, do all in the name of the Lord Jesus, giving thanks to God and the Father by him." },
+    "Psalm 107:1": { ref:"Psalm 107:1", text:"O give thanks unto the LORD, for he is good: for his mercy endureth for ever." },
+    "Ephesians 5:20": { ref:"Ephesians 5:20", text:"Giving thanks always for all things unto God and the Father in the name of our Lord Jesus Christ." }
   };
 
   const TOPICS = [
@@ -299,7 +311,13 @@
       verses:["James 1:5","Proverbs 2:6","Proverbs 3:13–14","Colossians 3:16","Ecclesiastes 7:12"] },
     { id:"identity", name:"Identity In Christ", icon:"fingerprint", color:"", img:"cross", count:5,
       desc:"Who He says you are outweighs every label you have been given.",
-      verses:["2 Corinthians 5:17","Galatians 2:20","Ephesians 2:10","1 Peter 2:9","Romans 8:16–17"] }
+      verses:["2 Corinthians 5:17","Galatians 2:20","Ephesians 2:10","1 Peter 2:9","Romans 8:16–17"] },
+    { id:"courage", name:"Courage", icon:"shield", color:"", img:"mountain", count:5,
+      desc:"Doing the right thing while your knees are still shaking.",
+      verses:["2 Timothy 1:7","1 Corinthians 16:13","Psalm 27:1","Joshua 1:6","Psalm 31:24"] },
+    { id:"gratitude", name:"Gratitude", icon:"sparkles", color:"", img:"heart", count:5,
+      desc:"Naming what is good out loud, especially on the hard days.",
+      verses:["1 Thessalonians 5:18","Psalm 100:4","Colossians 3:17","Psalm 107:1","Ephesians 5:20"] }
   ];
 
   function getTopic(id){ return TOPICS.find(t => t.id === id); }
