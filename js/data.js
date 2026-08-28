@@ -251,7 +251,25 @@
     "Joshua 1:9": { ref:"Joshua 1:9", text:"Have not I commanded thee? Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest." },
     "Deuteronomy 31:6": { ref:"Deuteronomy 31:6", text:"Be strong and of a good courage, fear not, nor be afraid of them: for the LORD thy God, he it is that doth go with thee; he will not fail thee, nor forsake thee." },
     "2 Corinthians 1:20": { ref:"2 Corinthians 1:20", text:"For all the promises of God in him are yea, and in him Amen, unto the glory of God by us." },
-    "Philippians 4:19": { ref:"Philippians 4:19", text:"But my God shall supply all your need according to his riches in glory by Christ Jesus." }
+    "Philippians 4:19": { ref:"Philippians 4:19", text:"But my God shall supply all your need according to his riches in glory by Christ Jesus." },
+
+    "Philippians 4:6–7": { ref:"Philippians 4:6–7", text:"Be careful for nothing; but in every thing by prayer and supplication with thanksgiving let your requests be made known unto God. And the peace of God, which passeth all understanding, shall keep your hearts and minds through Christ Jesus." },
+    "John 14:27": { ref:"John 14:27", text:"Peace I leave with you, my peace I give unto you: not as the world giveth, give I unto you. Let not your heart be troubled, neither let it be afraid." },
+    "Isaiah 26:3": { ref:"Isaiah 26:3", text:"Thou wilt keep him in perfect peace, whose mind is stayed on thee: because he trusteth in thee." },
+    "Colossians 3:15": { ref:"Colossians 3:15", text:"And let the peace of God rule in your hearts, to the which also ye are called in one body; and be ye thankful." },
+    "Psalm 29:11": { ref:"Psalm 29:11", text:"The LORD will give strength unto his people; the LORD will bless his people with peace." },
+
+    "James 1:5": { ref:"James 1:5", text:"If any of you lack wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him." },
+    "Proverbs 2:6": { ref:"Proverbs 2:6", text:"For the LORD giveth wisdom: out of his mouth cometh knowledge and understanding." },
+    "Proverbs 3:13–14": { ref:"Proverbs 3:13–14", text:"Happy is the man that findeth wisdom, and the man that getteth understanding. For the merchandise of it is better than the merchandise of silver, and the gain thereof than fine gold." },
+    "Colossians 3:16": { ref:"Colossians 3:16", text:"Let the word of Christ dwell in you richly in all wisdom; teaching and admonishing one another in psalms and hymns and spiritual songs, singing with grace in your hearts to the Lord." },
+    "Ecclesiastes 7:12": { ref:"Ecclesiastes 7:12", text:"For wisdom is a defence, and money is a defence: but the excellency of knowledge is, that wisdom giveth life to them that have it." },
+
+    "2 Corinthians 5:17": { ref:"2 Corinthians 5:17", text:"Therefore if any man be in Christ, he is a new creature: old things are passed away; behold, all things are become new." },
+    "Galatians 2:20": { ref:"Galatians 2:20", text:"I am crucified with Christ: nevertheless I live; yet not I, but Christ liveth in me: and the life which I now live in the flesh I live by the faith of the Son of God, who loved me, and gave himself for me." },
+    "Ephesians 2:10": { ref:"Ephesians 2:10", text:"For we are his workmanship, created in Christ Jesus unto good works, which God hath before ordained that we should walk in them." },
+    "1 Peter 2:9": { ref:"1 Peter 2:9", text:"But ye are a chosen generation, a royal priesthood, an holy nation, a peculiar people; that ye should shew forth the praises of him who hath called you out of darkness into his marvellous light." },
+    "Romans 8:16–17": { ref:"Romans 8:16–17", text:"The Spirit itself beareth witness with our spirit, that we are the children of God: And if children, then heirs; heirs of God, and joint-heirs with Christ; if so be that we suffer with him, that we may be also glorified together." }
   };
 
   const TOPICS = [
@@ -272,11 +290,98 @@
       verses:["Isaiah 40:31","Psalm 27:14","Lamentations 3:25–26","Psalm 37:7","Micah 7:7","Habakkuk 2:3"] },
     { id:"promises", name:"God’s Promises", icon:"hand-heart", color:"orange", img:"cross", count:6,
       desc:"What He said He would do, long before you asked.",
-      verses:["Jeremiah 29:11","Romans 8:28","Joshua 1:9","Deuteronomy 31:6","2 Corinthians 1:20","Philippians 4:19"] }
+      verses:["Jeremiah 29:11","Romans 8:28","Joshua 1:9","Deuteronomy 31:6","2 Corinthians 1:20","Philippians 4:19"] },
+    { id:"peace", name:"Peace", icon:"wind", color:"teal", img:"mountain", count:5,
+      desc:"The kind of calm that holds steady even when nothing around you does.",
+      verses:["Philippians 4:6–7","John 14:27","Isaiah 26:3","Colossians 3:15","Psalm 29:11"] },
+    { id:"wisdom", name:"Wisdom", icon:"lightbulb", color:"orange", img:"sprout", count:5,
+      desc:"Knowing what to do next, and the humility to ask when you do not.",
+      verses:["James 1:5","Proverbs 2:6","Proverbs 3:13–14","Colossians 3:16","Ecclesiastes 7:12"] },
+    { id:"identity", name:"Identity In Christ", icon:"fingerprint", color:"", img:"cross", count:5,
+      desc:"Who He says you are outweighs every label you have been given.",
+      verses:["2 Corinthians 5:17","Galatians 2:20","Ephesians 2:10","1 Peter 2:9","Romans 8:16–17"] }
   ];
 
   function getTopic(id){ return TOPICS.find(t => t.id === id); }
   function getVerse(ref){ return VERSES[ref] || { ref, text:"Text not available yet." }; }
+
+  /* ------------------------------ Scripture graph --------------------------
+     Renders an Obsidian style node graph: a topic at the center, its verses
+     as labeled dots around it, plus small unlabeled dots and extra threads
+     for visual texture. Positions are deterministic per topic (seeded on
+     the verse reference) so the layout does not reshuffle on every render. */
+  function seededRand(seed){
+    let h = 0;
+    for(let i=0;i<seed.length;i++){ h = (Math.imul(31,h) + seed.charCodeAt(i)) | 0; }
+    const x = Math.sin(h) * 10000;
+    return x - Math.floor(x);
+  }
+
+  function renderGraph(container, topic, opts){
+    opts = opts || {};
+    const compact = !!opts.compact;
+    const cx = 50, cy = 50;
+    const rx = opts.rx || 40, ry = opts.ry || 37;
+    const n = topic.verses.length;
+
+    const real = topic.verses.map((ref, i) => {
+      const baseAngle = -90 + i * (360/n);
+      const jitterA = (seededRand(ref+"a") - 0.5) * (360/n) * 0.4;
+      const angle = (baseAngle + jitterA) * Math.PI/180;
+      const rJitter = 0.8 + seededRand(ref+"r") * 0.38;
+      const size = 7 + seededRand(ref+"s") * 4;
+      return {
+        ref,
+        l: Math.max(13, Math.min(87, cx + Math.cos(angle) * rx * rJitter)),
+        t: Math.max(7, Math.min(93, cy + Math.sin(angle) * ry * rJitter)),
+        size
+      };
+    });
+
+    function line(x1,y1,x2,y2,deco){
+      return '<line class="'+(deco?"deco":"")+'" x1="'+x1.toFixed(2)+'" y1="'+y1.toFixed(2)+'" x2="'+x2.toFixed(2)+'" y2="'+y2.toFixed(2)+'"/>';
+    }
+
+    let lines = "";
+    real.forEach(p => { lines += line(cx, cy, p.l, p.t, false); });
+
+    if(!compact){
+      real.forEach((p,i) => {
+        const q = real[(i+1) % real.length];
+        if(seededRand(p.ref+"link") > 0.45) lines += line(p.l, p.t, q.l, q.t, true);
+      });
+    }
+
+    let nodes = "";
+    const decoCount = compact ? 5 : 13;
+    for(let i=0;i<decoCount;i++){
+      const seed = topic.id + "deco" + i;
+      const ang = seededRand(seed+"ang") * 360 * Math.PI/180;
+      const rad = 0.45 + seededRand(seed+"rad") * 1.0;
+      const l = Math.max(2, Math.min(98, cx + Math.cos(ang) * rx * rad));
+      const t = Math.max(4, Math.min(96, cy + Math.sin(ang) * ry * rad));
+      const target = real[i % real.length];
+      lines += line(l, t, target.l, target.t, true);
+      const accent = seededRand(seed+"acc") > 0.72;
+      nodes += '<div class="gnode deco'+(accent?" accent":"")+'" style="left:'+l.toFixed(2)+'%;top:'+t.toFixed(2)+'%"><span class="dot"></span></div>';
+    }
+
+    real.forEach(p => {
+      const side = p.l >= cx ? "right" : "left";
+      nodes += '<div class="gnode '+side+'" data-ref="'+escapeHtml(p.ref)+'" style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%">' +
+        '<span class="dot" style="width:'+p.size.toFixed(1)+'px;height:'+p.size.toFixed(1)+'px"></span>' +
+        '<span class="label">'+escapeHtml(p.ref)+'</span>' +
+      '</div>';
+    });
+
+    nodes += '<div class="gnode center" style="left:'+cx+'%;top:'+cy+'%"><span class="dot"></span><span class="label">'+escapeHtml(topic.name)+'</span></div>';
+
+    container.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none">'+lines+'</svg>' + nodes;
+    container.querySelectorAll(".gnode[data-ref]").forEach(el => {
+      el.addEventListener("click", () => window.openVerseModal(el.dataset.ref));
+    });
+    if(window.lucide) lucide.createIcons();
+  }
 
   /* ------------------------------ Channels ------------------------------
      Public channels are visible to everyone using this browser. Private
@@ -517,7 +622,7 @@
     uid, escapeHtml, fmtDate,
     Auth, Store, Channels, Audio, UserEpisodes,
     EPISODES, VERSES, TOPICS, getTopic, getVerse, getAllEpisodes,
-    searchAll
+    searchAll, renderGraph
   };
 
 })();

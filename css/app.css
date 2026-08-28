@@ -365,36 +365,48 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 .bookmark-toggle.active{background:#7f49df}
 .bookmark-toggle svg{width:13px}
 
-/* NETWORK */
+/* NETWORK — an Obsidian style node graph: dots and threads, not boxes */
 .network{margin-top:12px;padding:16px 18px 18px;min-height:305px}
 .graph{
   height:235px;position:relative;overflow:hidden;border-radius:12px;
   background:
-    radial-gradient(circle at 50% 50%,rgba(88,49,143,.08),transparent 32%),
-    linear-gradient(180deg,rgba(12,13,22,.2),rgba(10,11,19,.45));
+    radial-gradient(circle at 50% 50%,rgba(88,49,143,.10),transparent 38%),
+    linear-gradient(180deg,#0e0f19,#0a0b13);
 }
 .graph.tall{height:420px}
 .graph svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.graph line{stroke:#444352;stroke-width:1;opacity:.55}
-.node-dot{fill:#8951d4}
-.node-dot.teal{fill:#5da9a7}
-.node{
-  position:absolute;transform:translate(-50%,-50%);height:42px;min-width:145px;padding:0 17px;
-  display:grid;place-items:center;border-radius:7px;border:1px solid rgba(255,255,255,.08);
-  background:#151a26;color:#bfd3dc;font-family:"Playfair Display",serif;font-size:12px;
-  box-shadow:0 12px 28px rgba(0,0,0,.18);
-  white-space:nowrap;cursor:pointer;transition:.15s ease;
+.graph line{stroke:#4a495c;stroke-width:.6;opacity:.6;vector-effect:non-scaling-stroke}
+.graph line.deco{stroke:#3a394a;opacity:.35}
+
+.gnode{
+  position:absolute;transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:6px;cursor:pointer;
+  padding:7px;margin:-7px;z-index:2;
 }
-.node:hover{border-color:rgba(178,118,255,.5);background:#1c2233;transform:translate(-50%,-50%) translateY(-2px)}
-.node.purple{background:#21172f;color:#d6bbed}
-.node.center-node{
-  min-width:150px;background:linear-gradient(180deg,#5a2d92,#3e246b);color:#eadcf7;
-  border-color:rgba(178,118,255,.28);font-size:13px;cursor:default;
+.gnode.left{flex-direction:row-reverse}
+.gnode .dot{
+  flex:0 0 auto;border-radius:50%;background:#e8e5f1;
+  box-shadow:0 0 0 3px rgba(232,229,241,.07);
+  transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
 }
-.node.center-node:hover{transform:translate(-50%,-50%)}
-.tiny-dot{
-  position:absolute;width:6px;height:6px;border-radius:50%;background:#7245b7;right:8px;top:7px;
+.gnode .label{
+  font-size:10.5px;color:#a9a6b8;white-space:nowrap;transition:color .15s ease;
 }
+.gnode:hover .dot{background:#fff;box-shadow:0 0 0 5px rgba(178,118,255,.22),0 0 16px rgba(178,118,255,.55);transform:scale(1.25)}
+.gnode:hover .label{color:#fff}
+
+.gnode.center{cursor:default;z-index:3}
+.gnode.center .dot{
+  width:17px;height:17px;
+  background:radial-gradient(circle at 34% 30%,#c79bff,#8b4cf6 70%);
+  box-shadow:0 0 0 7px rgba(139,76,246,.16),0 0 26px rgba(139,76,246,.55);
+}
+.gnode.center .label{font-family:"Playfair Display",serif;font-size:13px;font-weight:700;color:#f4eeff}
+.gnode.center:hover .dot{transform:none}
+
+.gnode.deco{cursor:default;pointer-events:none;z-index:1}
+.gnode.deco .dot{width:4px;height:4px;background:#565368;box-shadow:none}
+.gnode.deco.accent .dot{background:#5fa596}
 
 /* RIGHT CARDS */
 .side-card{padding:17px}
@@ -431,19 +443,20 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 }
 .day.off b{background:transparent;border:1px solid #6d4da2;color:#9d70ef}
 
-.networks-card{padding-bottom:12px}
+.networks-card{
+  padding-bottom:12px;height:305px;display:flex;flex-direction:column;
+}
+.networks-list{flex:1;min-height:0;overflow-y:auto}
 .network-row{
   height:38px;display:flex;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.025);
   font-size:11px;color:#ddd9e4;cursor:pointer;
 }
 .network-row:first-of-type{border-top:0}
+.network-row:hover{color:#fff}
 .net-icon{
-  width:26px;height:26px;border-radius:6px;display:grid;place-items:center;background:#262038;
+  width:22px;height:22px;display:grid;place-items:center;color:#e8e5f2;flex:0 0 22px;
 }
-.net-icon svg{width:13px}
-.net-icon.teal{background:#18363a;color:#5cc0b7}
-.net-icon.red{background:#382027;color:#f1737f}
-.net-icon.orange{background:#3b2a1c;color:#ffac41}
+.net-icon svg{width:16px}
 .network-row .num{margin-left:auto;color:#9693a2}
 .network-row .arr{width:13px;color:#6f6d78}
 
@@ -784,7 +797,7 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   .player-right{display:none}
   .player-center{gap:12px}
   .progress-zone{min-width:0}
-  .node{min-width:110px;font-size:11px;padding:0 9px}
+  .gnode .label{font-size:9.5px}
   .form-grid{grid-template-columns:1fr}
   .channel-hero{flex-direction:column}
   .channel-hero-actions{margin-left:0;flex-direction:row}

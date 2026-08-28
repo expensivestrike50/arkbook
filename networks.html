@@ -49,15 +49,6 @@
       const tabs = document.getElementById("topicTabs");
       tabs.innerHTML = B.TOPICS.map(t => '<button class="tab-btn" data-topic="'+t.id+'">'+t.name+'</button>').join("");
 
-      function layout(topic){
-        const n = topic.verses.length;
-        const cxPct = 50, cyPct = 50, rxPct = 40, ryPct = 34;
-        return topic.verses.map((ref,i) => {
-          const angle = (-90 + i*(360/n)) * Math.PI/180;
-          return { ref, l: cxPct + rxPct*Math.cos(angle), t: cyPct + ryPct*Math.sin(angle) };
-        });
-      }
-
       function renderTopic(topicId){
         const topic = B.getTopic(topicId) || B.TOPICS[0];
         tabs.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.topic===topic.id));
@@ -65,21 +56,8 @@
         document.getElementById("graphTitle").textContent = topic.name;
         document.getElementById("graphSub").textContent = topic.verses.length + " connected verses";
 
-        const nodes = layout(topic);
-        const cx = 500, cy = 230;
-        let lines = "";
-        let nodesHTML = "";
-        nodes.forEach(n => {
-          const x = n.l/100*1000, y = n.t/100*460;
-          lines += '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'"/>';
-          nodesHTML += '<div class="node" style="left:'+n.l+'%;top:'+n.t+'%" data-ref="'+B.escapeHtml(n.ref)+'">'+B.escapeHtml(n.ref)+'</div>';
-        });
-        nodesHTML += '<div class="node center-node" style="left:50%;top:50%">'+topic.name+'</div>';
-
         const gm = document.getElementById("graphMount");
-        gm.innerHTML = '<svg viewBox="0 0 1000 460" preserveAspectRatio="none">'+lines+'</svg>' + nodesHTML;
-        gm.querySelectorAll(".node[data-ref]").forEach(el => el.addEventListener("click", () => window.openVerseModal(el.dataset.ref)));
-        lucide.createIcons();
+        B.renderGraph(gm, topic, { compact:false, rx:42, ry:38 });
 
         const listEl = document.getElementById("verseList");
         const bookmarks = B.Store.getBookmarks();

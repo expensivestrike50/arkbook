@@ -97,7 +97,7 @@
               <h3 style="margin:0"><i data-lucide="blocks"></i>My Networks</h3>
               <a class="view-all" href="networks.html">View all</a>
             </div>
-            <div id="networksList"></div>
+            <div class="networks-list" id="networksList"></div>
           </section>
         </aside>
       </div>
@@ -175,23 +175,8 @@
 
       // scripture network preview (Forgiveness topic)
       const topic = B.getTopic("forgiveness");
-      const angles = [ -60,-20,20,60,120,160,200 ];
       const gm = document.getElementById("graphMount");
-      const positions = [
-        {l:19,t:26},{l:50,t:18},{l:82,t:26},{l:18,t:79},{l:50,t:86},{l:82,t:79},{l:50,t:52}
-      ];
-      let svgLines = "";
-      let nodesHTML = "";
-      const cx = 350, cy = 118;
-      const coords = [[120,55],[350,38],[590,55],[105,180],[350,198],[595,180]];
-      coords.forEach(c => { svgLines += '<line x1="'+cx+'" y1="'+cy+'" x2="'+c[0]+'" y2="'+c[1]+'"/>'; });
-      topic.verses.slice(0,6).forEach((ref, i) => {
-        const pos = positions[i];
-        nodesHTML += '<div class="node" style="left:'+pos.l+'%;top:'+pos.t+'%" data-ref="'+B.escapeHtml(ref)+'">'+B.escapeHtml(ref)+'</div>';
-      });
-      nodesHTML += '<div class="node center-node" style="left:50%;top:52%">'+topic.name+'</div>';
-      gm.innerHTML = '<svg viewBox="0 0 700 235" preserveAspectRatio="none">'+svgLines+'</svg>' + nodesHTML;
-      gm.querySelectorAll(".node[data-ref]").forEach(n => n.addEventListener("click", () => window.openVerseModal(n.dataset.ref)));
+      B.renderGraph(gm, topic, { compact:true });
 
       // verse of the day
       document.getElementById("votdLink").addEventListener("click", () => window.openVerseModal("Romans 12:21"));
@@ -227,8 +212,8 @@
       // networks list
       document.getElementById("networksList").innerHTML = B.TOPICS.map(t =>
         '<div class="network-row" data-topic="'+t.id+'">' +
-          '<div class="net-icon '+t.color+'"><i data-lucide="'+t.icon+'"></i></div>' +
-          '<span>'+t.name+'</span><span class="num">'+t.count+'</span><i class="arr" data-lucide="chevron-right"></i>' +
+          '<div class="net-icon"><i data-lucide="'+t.icon+'"></i></div>' +
+          '<span>'+B.escapeHtml(t.name)+'</span><span class="num">'+t.count+'</span><i class="arr" data-lucide="chevron-right"></i>' +
         '</div>'
       ).join("");
       document.querySelectorAll(".network-row").forEach(row => row.addEventListener("click", () => {
