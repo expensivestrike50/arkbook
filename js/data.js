@@ -293,8 +293,102 @@
       verses:["1 Thessalonians 5:18","Psalm 100:4","Colossians 3:17","Psalm 107:1","Ephesians 5:20"] }
   ];
 
-  function getTopic(id){ return TOPICS.find(t => t.id === id); }
-  function getVerse(ref){ return VERSES[ref] || { ref, text:"Text not available yet." }; }
+  /* ---------------------------- User networks -------------------------------
+     Anyone signed in can start their own network (a custom topic) and add
+     verse nodes to it, or add extra nodes onto a built in topic's network.
+     Built in topics and their original nodes stay read only, the same way
+     the built in episodes do; only nodes a person added themselves, or a
+     whole network they created, can be edited or removed by them. */
+  const UserNetworks = {
+    KEY: "bb_user_networks",
+    getAll(){ return readJSON(this.KEY, []); },
+    saveAll(list){ writeJSON(this.KEY, list); },
+    create({ name, desc, img }){
+      const user = Auth.requireAuth();
+      if(!user) return null;
+      const net = {
+        id: uid("net"), name: String(name||"Untitled network").trim(),
+        desc: String(desc||"").trim(), img: img || "cross",
+        ownerId: user.id, ownerName: user.name, custom:true, createdAt: Date.now()
+      };
+      const all = this.getAll();
+      all.unshift(net);
+      this.saveAll(all);
+      return net;
+    },
+    update(id, patch){
+      const all = this.getAll();
+      const idx = all.findIndex(n => n.id === id);
+      if(idx < 0) return;
+      all[idx] = Object.assign({}, all[idx], patch);
+      this.saveAll(all);
+    },
+    remove(id){
+      this.saveAll(this.getAll().filter(n => n.id !== id));
+      UserNodes.saveAll(UserNodes.getAll().filter(n => n.topicId !== id));
+    },
+    canEdit(net){
+      const user = Auth.getCurrentUser();
+      return !!(net && net.ownerId && user && net.ownerId === user.id);
+    }
+  };
+
+  const UserNodes = {
+    KEY: "bb_user_nodes",
+    getAll(){ return readJSON(this.KEY, []); },
+    saveAll(list){ writeJSON(this.KEY, list); },
+    forTopic(topicId){ return this.getAll().filter(n => n.topicId === topicId); },
+    add({ topicId, ref, text }){
+      const user = Auth.requireAuth();
+      if(!user) return null;
+      const node = {
+        id: uid("node"), topicId, ref: String(ref||"").trim(), text: String(text||"").trim(),
+        ownerId: user.id, ownerName: user.name, createdAt: Date.now()
+      };
+      const all = this.getAll();
+      all.unshift(node);
+      this.saveAll(all);
+      return node;
+    },
+    update(id, patch){
+      const all = this.getAll();
+      const idx = all.findIndex(n => n.id === id);
+      if(idx < 0) return;
+      all[idx] = Object.assign({}, all[idx], patch);
+      this.saveAll(all);
+    },
+    remove(id){
+      this.saveAll(this.getAll().filter(n => n.id !== id));
+    },
+    canEdit(node){
+      const user = Auth.getCurrentUser();
+      return !!(node && node.ownerId && user && node.ownerId === user.id);
+    }
+  };
+
+  function getAllTopics(){
+    const custom = UserNetworks.getAll().map(n => ({
+      id:n.id, name:n.name, icon:"git-branch", color:"", img:n.img, desc:n.desc,
+      custom:true, ownerId:n.ownerId, ownerName:n.ownerName,
+      verses: [],
+      count: UserNodes.forTopic(n.id).length
+    }));
+    return TOPICS.concat(custom);
+  }
+
+  function getTopicVerseRefs(topic){
+    const own = (topic && topic.verses) || [];
+    const added = topic ? UserNodes.forTopic(topic.id).map(n => n.ref) : [];
+    return own.concat(added);
+  }
+
+  function getTopic(id){ return getAllTopics().find(t => t.id === id); }
+  function getVerse(ref){
+    if(VERSES[ref]) return VERSES[ref];
+    const node = UserNodes.getAll().find(n => n.ref === ref);
+    if(node) return { ref: node.ref, text: node.text, userNode:true, id: node.id, ownerId: node.ownerId };
+    return { ref, text:"Text not available yet." };
+  }
 
   /* ------------------------------ Scripture graph --------------------------
      Renders an Obsidian style node graph: a topic at the center, its verses
@@ -313,9 +407,10 @@
     const compact = !!opts.compact;
     const cx = 50, cy = 50;
     const rx = opts.rx || 40, ry = opts.ry || 37;
-    const n = topic.verses.length;
+    const refs = getTopicVerseRefs(topic);
+    const n = Math.max(refs.length, 1);
 
-    const real = topic.verses.map((ref, i) => {
+    const real = refs.map((ref, i) => {
       const baseAngle = -90 + i * (360/n);
       const jitterA = (seededRand(ref+"a") - 0.5) * (360/n) * 0.4;
       const angle = (baseAngle + jitterA) * Math.PI/180;
@@ -344,7 +439,7 @@
     }
 
     let nodes = "";
-    const decoCount = compact ? 5 : 13;
+    const decoCount = real.length ? (compact ? 5 : 13) : 0;
     for(let i=0;i<decoCount;i++){
       const seed = topic.id + "deco" + i;
       const ang = seededRand(seed+"ang") * 360 * Math.PI/180;
@@ -602,7 +697,7 @@
       v.ref.toLowerCase().includes(q) || v.text.toLowerCase().includes(q)
     ).slice(0,5);
 
-    const topics = TOPICS.filter(t => t.name.toLowerCase().includes(q)).slice(0,5);
+    const topics = getAllTopics().filter(t => t.name.toLowerCase().includes(q)).slice(0,5);
 
     const channels = Channels.search(q).slice(0,5);
 
@@ -611,8 +706,9 @@
 
   window.BB = {
     uid, escapeHtml, fmtDate,
-    Auth, Store, Channels, Audio, UserEpisodes,
+    Auth, Store, Channels, Audio, UserEpisodes, UserNetworks, UserNodes,
     EPISODES, VERSES, TOPICS, getTopic, getVerse, getAllEpisodes,
+    getAllTopics, getTopicVerseRefs,
     searchAll, renderGraph
   };
 

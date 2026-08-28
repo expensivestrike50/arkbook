@@ -33,19 +33,21 @@
     if(user){
       const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
       const grid = document.getElementById("topicGrid");
-      grid.innerHTML = B.TOPICS.map(t => {
+      grid.innerHTML = B.getAllTopics().map(t => {
+        const refs = B.getTopicVerseRefs(t);
         const episodeCount = B.getAllEpisodes().filter(e => e.topic === t.id).length;
-        const shown = t.verses.slice(0,3);
-        const rest = t.verses.length - shown.length;
+        const shown = refs.slice(0,3);
+        const rest = refs.length - shown.length;
         const chips = shown.map(v => '<span class="chip">'+B.escapeHtml(v)+'</span>').join("") +
-          (rest > 0 ? '<span class="chip more">+'+rest+' more</span>' : "");
+          (rest > 0 ? '<span class="chip more">+'+rest+' more</span>' : "") +
+          (!refs.length ? '<span class="chip more">No verses yet</span>' : "");
         return (
-          '<article class="topic-panel ' + iconClass[t.img] + '" data-topic="'+t.id+'">' +
+          '<article class="topic-panel ' + (iconClass[t.img]||"img-cross") + '" data-topic="'+t.id+'">' +
             '<div class="topic-panel-bg"></div>' +
-            '<div class="topic-panel-count">'+t.count+' verses &middot; '+episodeCount+' episodes</div>' +
+            '<div class="topic-panel-count">'+(t.custom?'<span class="chip">Custom</span> ':'')+refs.length+' verses &middot; '+episodeCount+' episodes</div>' +
             '<div class="topic-panel-body">' +
               '<h3>'+B.escapeHtml(t.name)+'</h3>' +
-              '<p>'+B.escapeHtml(t.desc)+'</p>' +
+              '<p>'+B.escapeHtml(t.desc || (t.custom ? "A custom network by "+t.ownerName+"." : ""))+'</p>' +
               '<div class="topic-panel-verses">'+chips+'</div>' +
             '</div>' +
           '</article>'

@@ -85,8 +85,8 @@
 
           if(canEdit){
             const deleteBtn = document.getElementById("deleteChannelBtn");
-            deleteBtn.addEventListener("click", () => {
-              if(confirm("Delete this channel and all its episodes")){
+            deleteBtn.addEventListener("click", async () => {
+              if(await window.confirmDialog("Delete this channel and all its episodes")){
                 B.Channels.remove(channel.id);
                 location.href = "channels.html";
               }

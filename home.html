@@ -72,7 +72,7 @@
             <h3><i data-lucide="sun"></i>Verse of the Day</h3>
             <div class="verse-quote">Do not be overcome by evil,<br>but overcome evil with good.</div>
             <div class="side-link" id="votdLink">Romans 12:21</div>
-            <div class="small-actions">
+            <div class="small-actions" id="votdActions">
               <i data-lucide="bookmark" id="votdBookmark"></i>
               <i data-lucide="share-2" id="votdShare"></i>
               <i data-lucide="arrow-up-right" id="votdOpen"></i>
@@ -110,7 +110,7 @@
   <script src="js/layout.js"></script>
   <script>
     const B = window.BB;
-    const user = BBLayout.init("home");
+    const user = BBLayout.init("home", { hidePlayer:true });
     if(user){
       // waveform
       const wave = document.getElementById("wave");
@@ -179,19 +179,24 @@
       B.renderGraph(gm, topic, { compact:true });
 
       // verse of the day
+      // Wired on the stable container (not the icons themselves) with event
+      // delegation, since lucide.createIcons() replaces <i> with <svg> every
+      // time it runs and would otherwise silently drop direct listeners.
       document.getElementById("votdLink").addEventListener("click", () => window.openVerseModal("Romans 12:21"));
-      document.getElementById("votdOpen").addEventListener("click", () => window.openVerseModal("Romans 12:21"));
       function refreshVotdBookmark(){
         document.getElementById("votdBookmark").classList.toggle("active", B.Store.isBookmarked("Romans 12:21"));
       }
-      document.getElementById("votdBookmark").addEventListener("click", () => {
-        B.Store.toggleBookmark({ type:"verse", ref:"Romans 12:21", title:"Romans 12:21", snippet:"Be not overcome of evil, but overcome evil with good." });
-        refreshVotdBookmark();
-        BBLayout.showToast(B.Store.isBookmarked("Romans 12:21") ? "Verse bookmarked" : "Removed bookmark");
-      });
-      document.getElementById("votdShare").addEventListener("click", () => {
-        if(navigator.clipboard) navigator.clipboard.writeText("Be not overcome of evil, but overcome evil with good. — Romans 12:21").catch(()=>{});
-        BBLayout.showToast("Verse copied to share");
+      document.getElementById("votdActions").addEventListener("click", (e) => {
+        if(e.target.closest("#votdBookmark")){
+          B.Store.toggleBookmark({ type:"verse", ref:"Romans 12:21", title:"Romans 12:21", snippet:"Be not overcome of evil, but overcome evil with good." });
+          refreshVotdBookmark();
+          BBLayout.showToast(B.Store.isBookmarked("Romans 12:21") ? "Verse bookmarked" : "Removed bookmark");
+        } else if(e.target.closest("#votdShare")){
+          if(navigator.clipboard) navigator.clipboard.writeText("Be not overcome of evil, but overcome evil with good. — Romans 12:21").catch(()=>{});
+          BBLayout.showToast("Verse copied to share");
+        } else if(e.target.closest("#votdOpen")){
+          window.openVerseModal("Romans 12:21");
+        }
       });
       refreshVotdBookmark();
 
@@ -210,10 +215,10 @@
       }).join("");
 
       // networks list
-      document.getElementById("networksList").innerHTML = B.TOPICS.map(t =>
+      document.getElementById("networksList").innerHTML = B.getAllTopics().map(t =>
         '<div class="network-row" data-topic="'+t.id+'">' +
           '<div class="net-icon"><i data-lucide="'+t.icon+'"></i></div>' +
-          '<span>'+B.escapeHtml(t.name)+'</span><span class="num">'+t.count+'</span><i class="arr" data-lucide="chevron-right"></i>' +
+          '<span>'+B.escapeHtml(t.name)+'</span><span class="num">'+B.getTopicVerseRefs(t).length+'</span><i class="arr" data-lucide="chevron-right"></i>' +
         '</div>'
       ).join("");
       document.querySelectorAll(".network-row").forEach(row => row.addEventListener("click", () => {

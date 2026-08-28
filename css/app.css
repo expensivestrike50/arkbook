@@ -146,7 +146,7 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   height:50px;display:flex;align-items:center;gap:16px;margin-bottom:13px;position:relative;
 }
 .search{
-  flex:1 1 auto;max-width:640px;width:auto;height:38px;border:1px solid var(--line);
+  flex:1 1 auto;width:auto;height:38px;border:1px solid var(--line);
   border-radius:9px;background:#131420;display:flex;align-items:center;
   padding:0 12px;gap:10px;color:#878596;position:relative;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
@@ -551,12 +551,13 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 .verse-index-row:first-child{border-top:0}
 .verse-index-row:hover{background:rgba(255,255,255,.03)}
 .verse-index-ref{flex:0 0 150px;font-family:"Playfair Display",serif;font-size:13px;color:#e5e2ee}
-.verse-index-snip{font-size:12px;color:#8d8a99;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.verse-index-snip{flex:1 1 auto;min-width:0;font-size:12px;color:#8d8a99;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* CHANNELS */
 .channels-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
-.tabs{display:flex;gap:6px;background:#131420;border:1px solid var(--line);border-radius:9px;padding:3px}
-.tab-btn{height:32px;padding:0 14px;border-radius:7px;border:0;background:none;color:#a29fb0;font-size:12px;font-weight:600;cursor:pointer}
+.tabs{display:flex;gap:6px;background:#131420;border:1px solid var(--line);border-radius:9px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{height:32px;padding:0 14px;border-radius:7px;border:0;background:none;color:#a29fb0;font-size:12px;font-weight:600;cursor:pointer;flex:0 0 auto;white-space:nowrap}
 .tab-btn.active{background:#2a1f45;color:#fff}
 .channel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .channel-card{padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:12px}
@@ -811,6 +812,10 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   .form-grid{grid-template-columns:1fr}
   .channel-hero{flex-direction:column}
   .channel-hero-actions{margin-left:0;flex-direction:row}
+  .section-head{flex-wrap:wrap}
+  #graphActions .ghost-btn span{display:none}
+  #graphActions .ghost-btn{padding:0 10px}
+  .art-swatch{width:36px;height:36px}
 }
 @media (max-width:480px){
   .episode-grid,.episode-grid.full{grid-template-columns:1fr}

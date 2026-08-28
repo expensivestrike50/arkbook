@@ -53,7 +53,8 @@
     const B = window.BB;
     const user = BBLayout.init("library");
     if(user){
-      const allRefs = Object.keys(B.VERSES);
+      const userRefs = B.UserNodes.getAll().map(n => n.ref).filter(r => r && !B.VERSES[r]);
+      const allRefs = Object.keys(B.VERSES).concat(Array.from(new Set(userRefs)));
       const resultWrap = document.getElementById("lookupResultWrap");
 
       function doLookup(query){
@@ -93,8 +94,8 @@
       }
 
       const pills = document.getElementById("topicPills");
-      pills.innerHTML = B.TOPICS.map(t =>
-        '<button class="topic-pill" data-topic="'+t.id+'">'+B.escapeHtml(t.name)+'<span>'+t.count+'</span></button>'
+      pills.innerHTML = B.getAllTopics().map(t =>
+        '<button class="topic-pill" data-topic="'+t.id+'">'+B.escapeHtml(t.name)+'<span>'+B.getTopicVerseRefs(t).length+'</span></button>'
       ).join("");
       pills.querySelectorAll(".topic-pill").forEach(btn => btn.addEventListener("click", () => {
         location.href = "networks.html?topic=" + btn.dataset.topic;

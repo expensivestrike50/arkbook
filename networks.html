@@ -17,7 +17,7 @@
       <header class="topbar" id="topbarMount"></header>
 
       <h1 class="page-title">Scripture Networks</h1>
-      <p class="page-sub">Each network is centered on a topic. Every connected point is a verse. Click a verse to read it.</p>
+      <p class="page-sub">Each network is centered on a topic. Click a verse to read it, or add your own nodes to any network.</p>
 
       <div class="channels-toolbar">
         <div class="tabs" id="topicTabs"></div>
@@ -25,8 +25,14 @@
 
       <section class="panel network" style="margin-top:0">
         <div class="section-head">
-          <div class="section-title" id="graphTitle">Forgiveness</div>
-          <span style="font-size:11px;color:#8d8a99" id="graphSub">7 connected verses</span>
+          <div>
+            <div class="section-title" id="graphTitle">Forgiveness</div>
+            <span style="font-size:11px;color:#8d8a99" id="graphSub">7 connected verses</span>
+          </div>
+          <div style="display:flex;gap:8px" id="graphActions">
+            <button class="ghost-btn" id="addNodeBtn"><i data-lucide="plus"></i><span>Add verse</span></button>
+            <button class="ghost-btn danger-btn" id="deleteNetworkBtn" style="display:none"><i data-lucide="trash-2"></i><span>Delete network</span></button>
+          </div>
         </div>
         <div class="graph tall" id="graphMount"></div>
       </section>
@@ -40,45 +46,119 @@
 
   <div class="bottom-player" id="playerMount"></div>
 
+  <!-- NEW NETWORK MODAL -->
+  <div class="modal" id="netModal">
+    <div class="modal-box wide">
+      <div class="modal-head"><h2>New Network</h2><button class="close-btn" id="closeNetModal"><i data-lucide="x"></i></button></div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Network name</label>
+          <input id="netName" placeholder="Morning Strength" />
+          <div class="field-error" id="netNameError"></div>
+        </div>
+        <div class="field full">
+          <label>Description</label>
+          <textarea id="netDesc" placeholder="What ties these verses together"></textarea>
+        </div>
+        <div class="field full">
+          <label>Artwork</label>
+          <div class="art-pick" id="netArtPick"></div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="ghost-btn" id="cancelNetModal">Cancel</button>
+        <button class="primary-btn" id="saveNetBtn"><i data-lucide="check"></i><span>Create network</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT NODE MODAL -->
+  <div class="modal" id="nodeModal">
+    <div class="modal-box">
+      <div class="modal-head"><h2 id="nodeModalTitle">Add Verse</h2><button class="close-btn" id="closeNodeModal"><i data-lucide="x"></i></button></div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Reference</label>
+          <input id="nodeRef" placeholder="Romans 12:21" />
+          <div class="field-error" id="nodeRefError"></div>
+        </div>
+        <div class="field full">
+          <label>Verse text</label>
+          <textarea id="nodeText" placeholder="Paste or type the verse"></textarea>
+          <div class="field-error" id="nodeTextError"></div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="ghost-btn" id="cancelNodeModal">Cancel</button>
+        <button class="primary-btn" id="saveNodeBtn"><i data-lucide="check"></i><span>Save</span></button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/data.js"></script>
   <script src="js/layout.js"></script>
   <script>
     const B = window.BB;
-    const user = BBLayout.init("networks");
+    const user = BBLayout.init("networks", { topAction:{ label:"New network", icon:"plus", onClick: () => openNetModal() } });
     if(user){
+      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
       const tabs = document.getElementById("topicTabs");
-      tabs.innerHTML = B.TOPICS.map(t => '<button class="tab-btn" data-topic="'+t.id+'">'+t.name+'</button>').join("");
+      let currentTopicId = null;
+
+      function renderTabs(){
+        tabs.innerHTML = B.getAllTopics().map(t =>
+          '<button class="tab-btn" data-topic="'+t.id+'">'+B.escapeHtml(t.name)+(t.custom?' <i data-lucide="user" style="width:11px;vertical-align:-1px"></i>':'')+'</button>'
+        ).join("");
+        tabs.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => renderTopic(btn.dataset.topic)));
+        lucide.createIcons();
+      }
 
       function renderTopic(topicId){
-        const topic = B.getTopic(topicId) || B.TOPICS[0];
+        const topic = B.getTopic(topicId) || B.getAllTopics()[0];
+        currentTopicId = topic.id;
         tabs.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.topic===topic.id));
 
+        const refs = B.getTopicVerseRefs(topic);
         document.getElementById("graphTitle").textContent = topic.name;
-        document.getElementById("graphSub").textContent = topic.verses.length + " connected verses";
+        document.getElementById("graphSub").textContent = refs.length + " connected verse" + (refs.length===1?"":"s");
+        document.getElementById("deleteNetworkBtn").style.display = (topic.custom && B.UserNetworks.canEdit(topic)) ? "flex" : "none";
 
         const gm = document.getElementById("graphMount");
-        B.renderGraph(gm, topic, { compact:false, rx:42, ry:38 });
+        if(refs.length){
+          B.renderGraph(gm, topic, { compact:false, rx:42, ry:38 });
+        } else {
+          gm.innerHTML = '<div class="empty-state" style="padding-top:70px"><i data-lucide="git-branch"></i><h4>No verses yet</h4><p>Add the first node to start this network.</p></div>';
+          lucide.createIcons();
+        }
 
         const listEl = document.getElementById("verseList");
         const bookmarks = B.Store.getBookmarks();
-        listEl.innerHTML = topic.verses.map(ref => {
+        if(!refs.length){
+          listEl.innerHTML = '<div class="empty-state"><i data-lucide="book-open"></i><h4>Nothing here yet</h4><p>Use "Add verse" above to connect the first node.</p></div>';
+          lucide.createIcons();
+          return;
+        }
+        listEl.innerHTML = refs.map(ref => {
           const v = B.getVerse(ref);
           const bookmarked = bookmarks.some(b => b.ref === v.ref);
+          const mine = v.userNode && B.UserNodes.canEdit(v);
           return (
             '<div class="list-row">' +
               '<div class="list-icon"><i data-lucide="book-open"></i></div>' +
               '<div class="list-body">' +
-                '<h4>'+B.escapeHtml(v.ref)+'</h4>' +
+                '<h4>'+B.escapeHtml(v.ref)+(v.userNode?' <span class="pill">Added</span>':'')+'</h4>' +
                 '<p>'+B.escapeHtml(v.text.length>140 ? v.text.slice(0,140)+"…" : v.text)+'</p>' +
               '</div>' +
               '<div class="list-actions">' +
                 '<button data-open="'+B.escapeHtml(v.ref)+'" title="Read"><i data-lucide="maximize-2"></i></button>' +
                 '<button data-bm="'+B.escapeHtml(v.ref)+'" title="Bookmark" class="'+(bookmarked?"active":"")+'"><i data-lucide="bookmark"></i></button>' +
+                (mine ? '<button data-edit="'+v.id+'" title="Edit"><i data-lucide="pencil"></i></button><button data-del="'+v.id+'" title="Delete"><i data-lucide="trash-2"></i></button>' : "") +
               '</div>' +
             '</div>'
           );
         }).join("");
         lucide.createIcons();
+
         listEl.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => window.openVerseModal(btn.dataset.open)));
         listEl.querySelectorAll("[data-bm]").forEach(btn => btn.addEventListener("click", () => {
           const v = B.getVerse(btn.dataset.bm);
@@ -86,10 +166,92 @@
           BBLayout.showToast(B.Store.isBookmarked(v.ref) ? "Verse bookmarked" : "Removed bookmark");
           renderTopic(topic.id);
         }));
+        listEl.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", () => {
+          const node = B.UserNodes.getAll().find(n => n.id === btn.dataset.edit);
+          if(node) openNodeModal(node);
+        }));
+        listEl.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
+          if(!await window.confirmDialog("Remove this verse from the network")) return;
+          B.UserNodes.remove(btn.dataset.del);
+          BBLayout.showToast("Verse removed");
+          renderTabsAndTopic(topic.id);
+        }));
       }
 
-      tabs.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => renderTopic(btn.dataset.topic)));
+      function renderTabsAndTopic(topicId){ renderTabs(); renderTopic(topicId); }
 
+      /* ---- new network modal ---- */
+      const artOptions = ["cross","sprout","heart","door","mountain"];
+      let selectedNetArt = "cross";
+      const netArtPick = document.getElementById("netArtPick");
+      netArtPick.innerHTML = artOptions.map(a => '<button type="button" class="art-swatch '+iconClass[a]+(a==="cross"?" selected":"")+'" data-art="'+a+'"></button>').join("");
+      netArtPick.querySelectorAll(".art-swatch").forEach(btn => btn.addEventListener("click", () => {
+        selectedNetArt = btn.dataset.art;
+        netArtPick.querySelectorAll(".art-swatch").forEach(b => b.classList.toggle("selected", b===btn));
+      }));
+
+      window.openNetModal = function(){
+        document.getElementById("netName").value = "";
+        document.getElementById("netDesc").value = "";
+        document.getElementById("netNameError").textContent = "";
+        selectedNetArt = "cross";
+        netArtPick.querySelectorAll(".art-swatch").forEach(b => b.classList.toggle("selected", b.dataset.art==="cross"));
+        openModal("netModal");
+      };
+      document.getElementById("closeNetModal").addEventListener("click", () => closeModal("netModal"));
+      document.getElementById("cancelNetModal").addEventListener("click", () => closeModal("netModal"));
+      document.getElementById("saveNetBtn").addEventListener("click", () => {
+        const name = document.getElementById("netName").value.trim();
+        if(!name){ document.getElementById("netNameError").textContent = "Please name your network."; return; }
+        const net = B.UserNetworks.create({ name, desc: document.getElementById("netDesc").value.trim(), img: selectedNetArt });
+        closeModal("netModal");
+        BBLayout.showToast("Network created");
+        renderTabsAndTopic(net.id);
+      });
+
+      /* ---- add / edit node modal ---- */
+      let editingNodeId = null;
+      window.openNodeModal = function(existing){
+        editingNodeId = existing ? existing.id : null;
+        document.getElementById("nodeModalTitle").textContent = existing ? "Edit Verse" : "Add Verse";
+        document.getElementById("nodeRef").value = existing ? existing.ref : "";
+        document.getElementById("nodeText").value = existing ? existing.text : "";
+        document.getElementById("nodeRefError").textContent = "";
+        document.getElementById("nodeTextError").textContent = "";
+        openModal("nodeModal");
+      };
+      document.getElementById("addNodeBtn").addEventListener("click", () => openNodeModal(null));
+      document.getElementById("closeNodeModal").addEventListener("click", () => closeModal("nodeModal"));
+      document.getElementById("cancelNodeModal").addEventListener("click", () => closeModal("nodeModal"));
+      document.getElementById("saveNodeBtn").addEventListener("click", () => {
+        const ref = document.getElementById("nodeRef").value.trim();
+        const text = document.getElementById("nodeText").value.trim();
+        let ok = true;
+        if(!ref){ document.getElementById("nodeRefError").textContent = "Please add a reference."; ok = false; }
+        else document.getElementById("nodeRefError").textContent = "";
+        if(!text){ document.getElementById("nodeTextError").textContent = "Please add the verse text."; ok = false; }
+        else document.getElementById("nodeTextError").textContent = "";
+        if(!ok) return;
+
+        if(editingNodeId){
+          B.UserNodes.update(editingNodeId, { ref, text });
+          BBLayout.showToast("Verse updated");
+        } else {
+          B.UserNodes.add({ topicId: currentTopicId, ref, text });
+          BBLayout.showToast("Verse added");
+        }
+        closeModal("nodeModal");
+        renderTabsAndTopic(currentTopicId);
+      });
+
+      document.getElementById("deleteNetworkBtn").addEventListener("click", async () => {
+        if(!await window.confirmDialog("Delete this network and all of its verses")) return;
+        B.UserNetworks.remove(currentTopicId);
+        BBLayout.showToast("Network deleted");
+        renderTabsAndTopic("forgiveness");
+      });
+
+      renderTabs();
       const params = new URLSearchParams(location.search);
       renderTopic(params.get("topic") || "forgiveness");
     }

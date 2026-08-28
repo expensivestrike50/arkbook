@@ -8,7 +8,7 @@
     { key:"home", label:"Home", icon:"home", href:"home.html" },
     { key:"episodes", label:"Episodes", icon:"play-circle", href:"episodes.html" },
     { key:"library", label:"Bible Library", icon:"book-open", href:"library.html" },
-    { key:"networks", label:"Networks", icon:"users", href:"networks.html", count:B.TOPICS.length },
+    { key:"networks", label:"Networks", icon:"users", href:"networks.html", count:B.getAllTopics().length },
     { key:"topics", label:"Topics", icon:"brain-circuit", href:"topics.html" },
     { key:"channels", label:"Channels", icon:"radio", href:"channels.html" },
     { key:"bookmarks", label:"Bookmarks", icon:"bookmark", href:"bookmarks.html" },
@@ -137,6 +137,17 @@
           '<div class="verse-modal-actions">' +
             '<button class="ghost-btn" id="verseBookmarkBtn"><i data-lucide="bookmark"></i><span>Bookmark</span></button>' +
             '<button class="ghost-btn" id="verseCopyBtn"><i data-lucide="copy"></i><span>Copy</span></button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="modal" id="confirmModal">' +
+        '<div class="modal-box" style="width:min(380px,calc(100vw - 30px))">' +
+          '<div class="modal-head"><h2 id="confirmTitle">Are you sure?</h2></div>' +
+          '<p id="confirmMsg" style="font-size:12px;line-height:1.6;color:#c6c2cc;margin:0 0 20px"></p>' +
+          '<div class="form-actions">' +
+            '<button class="ghost-btn" id="confirmCancelBtn">Cancel</button>' +
+            '<button class="primary-btn danger-btn" id="confirmOkBtn"><i data-lucide="trash-2"></i><span id="confirmOkLabel">Delete</span></button>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -461,10 +472,33 @@
       btn.addEventListener("click", () => closeModal(btn.dataset.close));
     });
     document.querySelectorAll(".modal").forEach(m => {
-      m.addEventListener("click", (e) => { if(e.target === m) m.classList.remove("open"); });
+      m.addEventListener("click", (e) => { if(e.target === m) closeModal(m.id); });
     });
     window.addEventListener("keydown", (e) => {
-      if(e.key === "Escape") document.querySelectorAll(".modal.open").forEach(m => m.classList.remove("open"));
+      if(e.key === "Escape") document.querySelectorAll(".modal.open").forEach(m => closeModal(m.id));
+    });
+
+    /* In app replacement for window.confirm(), which blocks the whole page
+       (and browser automation) while it is open. Usage:
+       const ok = await window.confirmDialog("Delete this?"); if(!ok) return; */
+    let confirmResolve = null;
+    function settleConfirm(result){
+      if(confirmResolve){ confirmResolve(result); confirmResolve = null; }
+    }
+    document.getElementById("confirmOkBtn").addEventListener("click", () => { closeModal("confirmModal"); settleConfirm(true); });
+    window.confirmDialog = function(message, okLabel){
+      document.getElementById("confirmMsg").textContent = message;
+      document.getElementById("confirmOkLabel").textContent = okLabel || "Delete";
+      openModal("confirmModal");
+      return new Promise((resolve) => { confirmResolve = resolve; });
+    };
+    // any other way the confirm modal closes (Cancel, backdrop click,
+    // Escape) resolves as "false" so an awaiting caller never hangs
+    document.getElementById("confirmModal").addEventListener("click", (e) => {
+      if(e.target.id === "confirmModal" || e.target.closest("#confirmCancelBtn")) settleConfirm(false);
+    });
+    window.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && document.getElementById("confirmModal").classList.contains("open")) settleConfirm(false);
     });
 
     let noteMode = "note";
@@ -541,6 +575,14 @@
       document.body.insertAdjacentHTML("beforeend", fsPlayerHTML());
       document.body.insertAdjacentHTML("beforeend", playerTabHTML());
       document.body.insertAdjacentHTML("beforeend", modalsHTML());
+
+      /* Home has its own full sized player in the hero, so the bottom bar
+         (and its hide/show tab) would just be a redundant duplicate there. */
+      if(opts.hidePlayer){
+        document.getElementById("playerMount").style.display = "none";
+        const app = document.querySelector(".app");
+        if(app) app.style.paddingBottom = "0";
+      }
 
       const slot = document.getElementById("topActionSlot");
       if(opts.topAction === false){
