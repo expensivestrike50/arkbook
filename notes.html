@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Notes</h1>
+      <p class="page-sub">Your personal reflections. Private to your account, never shared with anyone else.</p>
+
+      <section class="panel list-panel" id="listPanel"></section>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("notes", { topAction:{ label:"New Note", icon:"plus", onClick:()=>window.openNoteModal("note") } });
+    if(user){
+      const panel = document.getElementById("listPanel");
+
+      function render(){
+        const list = B.Store.getNotes();
+        if(!list.length){
+          panel.innerHTML = '<div class="empty-state"><i data-lucide="notebook-pen"></i><h4>No notes yet</h4><p>Write down what a verse or episode is teaching you.</p></div>';
+          lucide.createIcons();
+          return;
+        }
+        panel.innerHTML = list.map(n => (
+          '<div class="list-row">' +
+            '<div class="list-icon"><i data-lucide="notebook-pen"></i></div>' +
+            '<div class="list-body">' +
+              '<h4>'+B.escapeHtml(n.title)+'</h4>' +
+              (n.body ? '<p>'+B.escapeHtml(n.body)+'</p>' : "") +
+              '<div class="list-meta">'+(n.scripture ? '<span class="pill">'+B.escapeHtml(n.scripture)+'</span>' : "")+'<span>'+B.fmtDate(n.createdAt)+'</span></div>' +
+            '</div>' +
+            '<div class="list-actions">' +
+              (n.scripture ? '<button data-verse="'+B.escapeHtml(n.scripture)+'" title="Open verse"><i data-lucide="book-open"></i></button>' : "") +
+              '<button data-remove="'+n.id+'" title="Delete"><i data-lucide="trash-2"></i></button>' +
+            '</div>' +
+          '</div>'
+        )).join("");
+        lucide.createIcons();
+
+        panel.querySelectorAll("[data-verse]").forEach(btn => btn.addEventListener("click", () => window.openVerseModal(btn.dataset.verse)));
+        panel.querySelectorAll("[data-remove]").forEach(btn => btn.addEventListener("click", () => {
+          B.Store.removeNote(btn.dataset.remove);
+          BBLayout.showToast("Note deleted");
+          render();
+        }));
+      }
+      render();
+      window.onDataChanged = render;
+    }
+  </script>
+</body>
+</html>

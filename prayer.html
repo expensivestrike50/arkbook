@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prayer Journal — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Prayer Journal</h1>
+      <p class="page-sub">A private record between you and God. No one else using ArkBook can see this.</p>
+
+      <section class="panel list-panel" id="listPanel"></section>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("prayer", { topAction:{ label:"Write a Prayer", icon:"plus", onClick:()=>window.openNoteModal("prayer") } });
+    if(user){
+      const panel = document.getElementById("listPanel");
+
+      function render(){
+        const list = B.Store.getPrayers();
+        if(!list.length){
+          panel.innerHTML = '<div class="empty-state"><i data-lucide="heart-handshake"></i><h4>No prayers yet</h4><p>Write your first prayer and keep track of how God answers it.</p></div>';
+          lucide.createIcons();
+          return;
+        }
+        panel.innerHTML = list.map(p => (
+          '<div class="list-row">' +
+            '<div class="list-icon"><i data-lucide="heart-handshake"></i></div>' +
+            '<div class="list-body">' +
+              '<h4>'+B.escapeHtml(p.title)+'</h4>' +
+              (p.body ? '<p>'+B.escapeHtml(p.body)+'</p>' : "") +
+              '<div class="list-meta">'+(p.scripture ? '<span class="pill">'+B.escapeHtml(p.scripture)+'</span>' : "")+'<span class="pill'+(p.answered?" answered":"")+'">'+(p.answered?"Answered":"Waiting")+'</span><span>'+B.fmtDate(p.createdAt)+'</span></div>' +
+            '</div>' +
+            '<div class="list-actions">' +
+              '<button data-toggle="'+p.id+'" title="Toggle answered"><i data-lucide="'+(p.answered?"rotate-ccw":"check")+'"></i></button>' +
+              '<button data-remove="'+p.id+'" title="Delete"><i data-lucide="trash-2"></i></button>' +
+            '</div>' +
+          '</div>'
+        )).join("");
+        lucide.createIcons();
+
+        panel.querySelectorAll("[data-toggle]").forEach(btn => btn.addEventListener("click", () => {
+          B.Store.togglePrayerAnswered(btn.dataset.toggle);
+          render();
+        }));
+        panel.querySelectorAll("[data-remove]").forEach(btn => btn.addEventListener("click", () => {
+          B.Store.removePrayer(btn.dataset.remove);
+          BBLayout.showToast("Prayer deleted");
+          render();
+        }));
+      }
+      render();
+      window.onDataChanged = render;
+    }
+  </script>
+</body>
+</html>

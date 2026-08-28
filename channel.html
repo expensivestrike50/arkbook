@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Channel — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <div id="channelBody">Loading…</div>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("channels", { topAction:false });
+    if(user){
+      const params = new URLSearchParams(location.search);
+      const id = params.get("id");
+      const channel = id ? B.Channels.getById(id) : null;
+      const body = document.getElementById("channelBody");
+
+      function initials(name){ return String(name||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
+
+      if(!channel || !B.Channels.canView(channel)){
+        body.innerHTML = '<div class="panel empty-state"><i data-lucide="radio"></i><h4>Channel not available</h4><p>This channel does not exist, or it is private to someone else.</p></div>';
+        lucide.createIcons();
+      } else {
+        const canEdit = B.Channels.canEdit(channel);
+
+        function renderShell(){
+          body.innerHTML =
+            '<article class="panel channel-hero">' +
+              '<div class="channel-icon">'+initials(channel.name)+'</div>' +
+              '<div style="flex:1;min-width:0">' +
+                '<div class="list-meta" style="margin-bottom:8px"><span class="vis-pill'+(channel.visibility==="public"?" public":"")+'">'+channel.visibility+'</span><span>by '+B.escapeHtml(channel.ownerName)+'</span></div>' +
+                '<h1>'+B.escapeHtml(channel.name)+'</h1>' +
+                '<p>'+B.escapeHtml(channel.description || "No description yet.")+'</p>' +
+                '<div class="channel-links" id="linksRow"></div>' +
+              '</div>' +
+              (canEdit ? '<div class="channel-hero-actions"><button class="danger-btn ghost-btn" id="deleteChannelBtn"><i data-lucide="trash-2"></i><span>Delete channel</span></button></div>' : "") +
+            '</article>' +
+
+            (canEdit ?
+              '<section class="panel" style="padding:20px;margin-bottom:16px">' +
+                '<div class="section-head"><div class="section-title">Upload audio</div></div>' +
+                '<div class="form-grid">' +
+                  '<div class="field full"><label>Episode title</label><input id="epTitle" placeholder="A short prayer for today" /></div>' +
+                  '<div class="field full"><label>Description</label><textarea id="epDesc" placeholder="What is this episode about"></textarea></div>' +
+                  '<div class="field full">' +
+                    '<label>Audio file</label>' +
+                    '<div class="upload-drop" id="dropZone"><i data-lucide="upload-cloud"></i><div>Click to choose an audio file, or drag it here</div><div id="fileInfo"></div></div>' +
+                    '<input type="file" id="fileInput" accept="audio/*" style="display:none" />' +
+                  '</div>' +
+                '</div>' +
+                '<div class="form-actions"><button class="primary-btn" id="uploadBtn"><i data-lucide="upload"></i><span>Add episode</span></button></div>' +
+              '</section>'
+            : "") +
+
+            '<section class="panel list-panel">' +
+              '<div class="section-head" style="padding:10px 8px 4px"><div class="section-title">Episodes</div></div>' +
+              '<div id="episodeList"></div>' +
+            '</section>';
+
+          const linksRow = document.getElementById("linksRow");
+          linksRow.innerHTML = (channel.links||[]).map(l =>
+            '<a href="'+B.escapeHtml(l.url)+'" target="_blank" rel="noopener noreferrer"><i data-lucide="link"></i>'+B.escapeHtml(l.label)+'</a>'
+          ).join("");
+
+          renderEpisodes();
+          lucide.createIcons();
+
+          if(canEdit){
+            const deleteBtn = document.getElementById("deleteChannelBtn");
+            deleteBtn.addEventListener("click", () => {
+              if(confirm("Delete this channel and all its episodes")){
+                B.Channels.remove(channel.id);
+                location.href = "channels.html";
+              }
+            });
+            wireUpload();
+          }
+        }
+
+        function renderEpisodes(){
+          const list = document.getElementById("episodeList");
+          const eps = channel.episodes || [];
+          if(!eps.length){
+            list.innerHTML = '<div class="empty-state"><i data-lucide="music"></i><h4>No episodes yet</h4><p>'+(canEdit ? "Upload the first one above." : "Check back soon.")+'</p></div>';
+            lucide.createIcons();
+            return;
+          }
+          list.innerHTML = eps.map(e => (
+            '<div class="audio-row" data-ep="'+e.id+'">' +
+              '<button class="audio-play" data-play="'+e.id+'"><i data-lucide="play"></i></button>' +
+              '<div class="audio-body"><h4>'+B.escapeHtml(e.title)+'</h4><p>'+B.escapeHtml(e.description||"")+' &middot; '+B.fmtDate(e.createdAt)+'</p></div>' +
+              (canEdit ? '<div class="list-actions"><button data-del="'+e.id+'" title="Delete"><i data-lucide="trash-2"></i></button></div>' : "") +
+              '<audio class="audio-el" id="audio-'+e.id+'"></audio>' +
+            '</div>'
+          )).join("");
+          lucide.createIcons();
+
+          list.querySelectorAll("[data-play]").forEach(btn => btn.addEventListener("click", async () => {
+            const epId = btn.dataset.play;
+            const ep = eps.find(x => x.id === epId);
+            const audioEl = document.getElementById("audio-"+epId);
+            document.querySelectorAll(".audio-play").forEach(b => { if(b!==btn){ b.innerHTML = '<i data-lucide="play"></i>'; lucide.createIcons(); } });
+            document.querySelectorAll("audio").forEach(a => { if(a!==audioEl) a.pause(); });
+
+            if(!audioEl.src){
+              const blob = await B.Audio.get(ep.audioId);
+              if(!blob){ BBLayout.showToast("Audio not found in this browser", "alert-circle"); return; }
+              audioEl.src = URL.createObjectURL(blob);
+            }
+            if(audioEl.paused){
+              audioEl.play();
+              btn.innerHTML = '<i data-lucide="pause"></i>';
+            } else {
+              audioEl.pause();
+              btn.innerHTML = '<i data-lucide="play"></i>';
+            }
+            lucide.createIcons();
+            audioEl.onended = () => { btn.innerHTML = '<i data-lucide="play"></i>'; lucide.createIcons(); };
+          }));
+
+          list.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", () => {
+            B.Channels.removeEpisode(channel.id, btn.dataset.del);
+            channel.episodes = (channel.episodes||[]).filter(e => e.id !== btn.dataset.del);
+            BBLayout.showToast("Episode removed");
+            renderEpisodes();
+          }));
+        }
+
+        function wireUpload(){
+          const dropZone = document.getElementById("dropZone");
+          const fileInput = document.getElementById("fileInput");
+          let chosenFile = null;
+
+          dropZone.addEventListener("click", () => fileInput.click());
+          dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag"); });
+          dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
+          dropZone.addEventListener("drop", (e) => {
+            e.preventDefault(); dropZone.classList.remove("drag");
+            if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+          });
+          fileInput.addEventListener("change", () => { if(fileInput.files[0]) setFile(fileInput.files[0]); });
+
+          function setFile(file){
+            if(!file.type.startsWith("audio/")){ BBLayout.showToast("Please choose an audio file", "alert-circle"); return; }
+            chosenFile = file;
+            document.getElementById("fileInfo").innerHTML = '<span class="file-chip"><i data-lucide="music"></i>'+B.escapeHtml(file.name)+'</span>';
+            lucide.createIcons();
+          }
+
+          document.getElementById("uploadBtn").addEventListener("click", async () => {
+            const title = document.getElementById("epTitle").value.trim();
+            if(!title){ BBLayout.showToast("Please add a title", "alert-circle"); return; }
+            if(!chosenFile){ BBLayout.showToast("Please choose an audio file", "alert-circle"); return; }
+            const description = document.getElementById("epDesc").value.trim();
+
+            const btn = document.getElementById("uploadBtn");
+            btn.disabled = true;
+            btn.querySelector("span").textContent = "Uploading…";
+
+            await B.Channels.addEpisode(channel.id, { title, description, file: chosenFile });
+            const fresh = B.Channels.getById(channel.id);
+            channel.episodes = fresh.episodes;
+
+            document.getElementById("epTitle").value = "";
+            document.getElementById("epDesc").value = "";
+            document.getElementById("fileInfo").innerHTML = "";
+            chosenFile = null;
+            btn.disabled = false;
+            btn.querySelector("span").textContent = "Add episode";
+
+            BBLayout.showToast("Episode uploaded");
+            renderEpisodes();
+          });
+        }
+
+        renderShell();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Episodes — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Episodes</h1>
+      <p class="page-sub">Every devotional episode in one place. Filter by topic, or upload your own.</p>
+
+      <div class="channels-toolbar">
+        <div class="tabs" id="topicTabs"></div>
+      </div>
+
+      <section class="panel" style="padding:16px">
+        <div class="episode-grid full" id="episodeGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <!-- UPLOAD EPISODE MODAL -->
+  <div class="modal" id="uploadModal">
+    <div class="modal-box wide">
+      <div class="modal-head"><h2>Upload Episode</h2><button class="close-btn" id="closeUploadModal"><i data-lucide="x"></i></button></div>
+
+      <div class="form-grid">
+        <div class="field full">
+          <label>Episode title</label>
+          <input id="epTitle" placeholder="A short prayer for today" />
+          <div class="field-error" id="epTitleError"></div>
+        </div>
+        <div class="field">
+          <label>Scripture reference</label>
+          <input id="epVerse" placeholder="Romans 12:21" />
+        </div>
+        <div class="field">
+          <label>Topic</label>
+          <select id="epTopic"></select>
+        </div>
+        <div class="field full">
+          <label>Description</label>
+          <textarea id="epDesc" placeholder="What is this episode about"></textarea>
+        </div>
+        <div class="field full">
+          <label>Artwork</label>
+          <div class="art-pick" id="artPick"></div>
+        </div>
+        <div class="field full">
+          <label>Audio file</label>
+          <div class="upload-drop" id="dropZone"><i data-lucide="upload-cloud"></i><div>Click to choose an audio file, or drag it here</div><div id="epFileInfo"></div></div>
+          <input type="file" id="epFileInput" accept="audio/*" style="display:none" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="ghost-btn" id="cancelUploadModal">Cancel</button>
+        <button class="primary-btn" id="saveEpisodeBtn"><i data-lucide="upload"></i><span>Upload episode</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("episodes", { topAction:{ label:"Upload episode", icon:"upload", onClick: () => openUploadModal() } });
+    if(user){
+      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+      const grid = document.getElementById("episodeGrid");
+      let activeTopic = "all";
+
+      const tabs = document.getElementById("topicTabs");
+      const tabDefs = [{id:"all", name:"All"}].concat(B.TOPICS.map(t=>({id:t.id,name:t.name})));
+      tabs.innerHTML = tabDefs.map(t => '<button class="tab-btn'+(t.id==="all"?" active":"")+'" data-topic="'+t.id+'">'+t.name+'</button>').join("");
+      tabs.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => {
+        activeTopic = btn.dataset.topic;
+        tabs.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      }));
+
+      function render(){
+        const all = B.getAllEpisodes();
+        const list = all.filter(e => activeTopic==="all" || e.topic===activeTopic);
+        const bookmarks = B.Store.getBookmarks();
+        const downloads = B.Store.getDownloads();
+
+        if(!list.length){
+          grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i data-lucide="play-circle"></i><h4>No episodes here yet</h4><p>Try a different topic.</p></div>';
+          lucide.createIcons();
+          return;
+        }
+
+        grid.innerHTML = list.map(e => {
+          const bookmarked = bookmarks.some(b => b.ref === e.id);
+          const downloaded = downloads.includes(e.id);
+          const canDelete = e.uploaded && B.UserEpisodes.canEdit(e);
+          return (
+          '<article class="episode-card" data-id="'+e.id+'">' +
+            '<div class="thumb ' + iconClass[e.img] + '">' +
+              '<button class="bookmark-toggle'+(bookmarked?' active':'')+'" data-bm="'+e.id+'"><i data-lucide="bookmark"></i></button>' +
+              (e.uploaded ? '<span class="badge upload-badge">Uploaded</span>' : "") +
+              '<h3>'+B.escapeHtml(e.title)+'</h3>' +
+              '<span class="duration">'+e.duration+'</span>' +
+            '</div>' +
+            '<div class="card-info">' +
+              '<strong>'+B.escapeHtml(e.verse||"")+'</strong>' +
+              '<span>'+(e.uploaded ? "by "+B.escapeHtml(e.uploadedBy) : B.fmtDate(e.date))+(downloaded?" &middot; Downloaded":"")+'</span>' +
+              (canDelete ? '<button class="mini-del" data-del="'+e.id+'" title="Delete"><i data-lucide="trash-2"></i></button>' : "") +
+              '<button class="mini-play" data-play="'+e.id+'"><i data-lucide="play"></i></button>' +
+            '</div>' +
+          '</article>');
+        }).join("");
+        lucide.createIcons();
+
+        grid.querySelectorAll("[data-play]").forEach(btn => btn.addEventListener("click", async (ev) => {
+          ev.stopPropagation();
+          const ep = all.find(x => x.id === btn.dataset.play);
+          await window.playEpisode(ep);
+          BBLayout.showToast("Now playing " + ep.title);
+        }));
+        grid.querySelectorAll("[data-bm]").forEach(btn => btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const ep = all.find(x => x.id === btn.dataset.bm);
+          B.Store.toggleBookmark({ type:"episode", ref:ep.id, title:ep.title, snippet:ep.verse });
+          BBLayout.showToast(B.Store.isBookmarked(ep.id) ? "Episode bookmarked" : "Removed bookmark");
+          render();
+        }));
+        grid.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          B.UserEpisodes.remove(btn.dataset.del);
+          BBLayout.showToast("Episode deleted");
+          render();
+        }));
+        grid.querySelectorAll(".episode-card").forEach(card => card.addEventListener("click", async () => {
+          const ep = all.find(x => x.id === card.dataset.id);
+          await window.playEpisode(ep);
+          if(ep.verse) window.openVerseModal(ep.verse);
+        }));
+      }
+
+      const params = new URLSearchParams(location.search);
+      const openId = params.get("open");
+      render();
+      if(openId){
+        const ep = B.getAllEpisodes().find(x => x.id === openId);
+        if(ep){ window.playEpisode(ep); if(ep.verse) window.openVerseModal(ep.verse); }
+      }
+
+      /* ---- upload modal ---- */
+      const artOptions = ["cross","sprout","heart","door","mountain"];
+      let selectedArt = "cross";
+      let chosenFile = null;
+
+      document.getElementById("epTopic").innerHTML = B.TOPICS.map(t => '<option value="'+t.id+'">'+B.escapeHtml(t.name)+'</option>').join("");
+
+      const artPick = document.getElementById("artPick");
+      artPick.innerHTML = artOptions.map(a => '<button type="button" class="art-swatch '+iconClass[a]+(a===selectedArt?" selected":"")+'" data-art="'+a+'"></button>').join("");
+      artPick.querySelectorAll(".art-swatch").forEach(btn => btn.addEventListener("click", () => {
+        selectedArt = btn.dataset.art;
+        artPick.querySelectorAll(".art-swatch").forEach(b => b.classList.toggle("selected", b===btn));
+      }));
+
+      const dropZone = document.getElementById("dropZone");
+      const fileInput = document.getElementById("epFileInput");
+      dropZone.addEventListener("click", () => fileInput.click());
+      dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag"); });
+      dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault(); dropZone.classList.remove("drag");
+        if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+      });
+      fileInput.addEventListener("change", () => { if(fileInput.files[0]) setFile(fileInput.files[0]); });
+
+      function setFile(file){
+        if(!file.type.startsWith("audio/")){ BBLayout.showToast("Please choose an audio file", "alert-circle"); return; }
+        chosenFile = file;
+        document.getElementById("epFileInfo").innerHTML = '<span class="file-chip"><i data-lucide="music"></i>'+B.escapeHtml(file.name)+'</span>';
+        lucide.createIcons();
+      }
+
+      window.openUploadModal = function(){
+        document.getElementById("epTitle").value = "";
+        document.getElementById("epVerse").value = "";
+        document.getElementById("epDesc").value = "";
+        document.getElementById("epTitleError").textContent = "";
+        document.getElementById("epFileInfo").innerHTML = "";
+        document.getElementById("epTopic").selectedIndex = 0;
+        chosenFile = null;
+        selectedArt = "cross";
+        artPick.querySelectorAll(".art-swatch").forEach(b => b.classList.toggle("selected", b.dataset.art==="cross"));
+        document.getElementById("uploadModal").classList.add("open");
+      };
+      function closeUploadModal(){ document.getElementById("uploadModal").classList.remove("open"); }
+      document.getElementById("closeUploadModal").addEventListener("click", closeUploadModal);
+      document.getElementById("cancelUploadModal").addEventListener("click", closeUploadModal);
+      document.getElementById("uploadModal").addEventListener("click", (e)=>{ if(e.target.id==="uploadModal") closeUploadModal(); });
+
+      document.getElementById("saveEpisodeBtn").addEventListener("click", async () => {
+        const title = document.getElementById("epTitle").value.trim();
+        if(!title){ document.getElementById("epTitleError").textContent = "Please add a title."; return; }
+        if(!chosenFile){ BBLayout.showToast("Please choose an audio file", "alert-circle"); return; }
+
+        const btn = document.getElementById("saveEpisodeBtn");
+        btn.disabled = true;
+        btn.querySelector("span").textContent = "Uploading…";
+
+        await B.UserEpisodes.create({
+          title,
+          verse: document.getElementById("epVerse").value.trim(),
+          topic: document.getElementById("epTopic").value,
+          description: document.getElementById("epDesc").value.trim(),
+          img: selectedArt,
+          file: chosenFile
+        });
+
+        btn.disabled = false;
+        btn.querySelector("span").textContent = "Upload episode";
+        closeUploadModal();
+        BBLayout.showToast("Episode uploaded");
+        render();
+      });
+    }
+  </script>
+</body>
+</html>

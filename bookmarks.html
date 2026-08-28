@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bookmarks — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Bookmarks</h1>
+      <p class="page-sub">Verses and episodes you have saved. Only visible to your account.</p>
+
+      <section class="panel list-panel" id="listPanel"></section>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("bookmarks", { topAction:false });
+    if(user){
+      const panel = document.getElementById("listPanel");
+
+      function render(){
+        const list = B.Store.getBookmarks();
+        if(!list.length){
+          panel.innerHTML = '<div class="empty-state"><i data-lucide="bookmark"></i><h4>No bookmarks yet</h4><p>Save a verse or episode and it will show up here, just for you.</p></div>';
+          lucide.createIcons();
+          return;
+        }
+        panel.innerHTML = list.map(b => (
+          '<div class="list-row">' +
+            '<div class="list-icon"><i data-lucide="'+(b.type==="episode"?"play-circle":"book-open")+'"></i></div>' +
+            '<div class="list-body">' +
+              '<h4>'+B.escapeHtml(b.title)+'</h4>' +
+              '<p>'+B.escapeHtml(b.snippet||"")+'</p>' +
+              '<div class="list-meta"><span class="pill">'+(b.type==="episode"?"Episode":"Verse")+'</span><span>'+B.fmtDate(b.createdAt)+'</span></div>' +
+            '</div>' +
+            '<div class="list-actions">' +
+              '<button data-open="'+b.id+'" title="Open"><i data-lucide="maximize-2"></i></button>' +
+              '<button data-remove="'+b.id+'" title="Remove"><i data-lucide="trash-2"></i></button>' +
+            '</div>' +
+          '</div>'
+        )).join("");
+        lucide.createIcons();
+
+        panel.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => {
+          const b = list.find(x => x.id === btn.dataset.open);
+          if(b.type === "episode") location.href = "episodes.html?open=" + b.ref;
+          else window.openVerseModal(b.ref);
+        }));
+        panel.querySelectorAll("[data-remove]").forEach(btn => btn.addEventListener("click", () => {
+          B.Store.removeBookmark(btn.dataset.remove);
+          BBLayout.showToast("Removed bookmark");
+          render();
+        }));
+      }
+      render();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Home — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <div class="content-grid">
+        <section class="center">
+          <article class="panel hero">
+            <div class="hero-head">
+              <div class="hero-title">Today’s Devotional</div>
+              <div class="badge">New Episode</div>
+            </div>
+
+            <div class="hero-main">
+              <div class="cover">
+                <div class="cover-text">DON’T<br>BECOME<br>WHAT HURT<br>YOU</div>
+                <div class="cover-verse">ROMANS 12:21</div>
+              </div>
+              <div class="episode-info">
+                <h1>Don’t Become What<br>Hurt You</h1>
+                <div class="meta">
+                  <span><i data-lucide="book-open"></i>Romans 12:21</span>
+                  <span><i data-lucide="clock-3"></i>2:03</span>
+                </div>
+                <p>What happened to you should teach you, not turn you into someone you were never meant to become.</p>
+              </div>
+            </div>
+
+            <div class="hero-player">
+              <button class="play-lg play-toggle" aria-label="Play"><i data-lucide="play"></i></button>
+              <button class="skip-btn"><i data-lucide="rotate-ccw"></i><small>15</small></button>
+              <div class="wave-wrap">
+                <div class="wave" id="wave"></div>
+                <div class="wave-times"><span id="heroTime">00:32</span><span>02:33</span></div>
+              </div>
+              <button class="skip-btn"><i data-lucide="rotate-cw"></i><small>15</small></button>
+            </div>
+          </article>
+
+          <section class="panel episodes">
+            <div class="section-head">
+              <div class="section-title">Latest Episodes</div>
+              <a class="view-all" href="episodes.html">View all</a>
+            </div>
+            <div class="episode-grid" id="episodeGrid"></div>
+          </section>
+
+          <section class="panel network">
+            <div class="section-head">
+              <div class="section-title">Scripture Network</div>
+              <a class="view-all" href="networks.html">View all</a>
+            </div>
+            <div class="graph" id="graphMount"></div>
+          </section>
+        </section>
+
+        <aside class="rightcol">
+          <section class="panel side-card verse-card">
+            <h3><i data-lucide="sun"></i>Verse of the Day</h3>
+            <div class="verse-quote">Do not be overcome by evil,<br>but overcome evil with good.</div>
+            <div class="side-link" id="votdLink">Romans 12:21</div>
+            <div class="small-actions">
+              <i data-lucide="bookmark" id="votdBookmark"></i>
+              <i data-lucide="share-2" id="votdShare"></i>
+              <i data-lucide="arrow-up-right" id="votdOpen"></i>
+            </div>
+          </section>
+
+          <section class="panel side-card prayer-card">
+            <h3><i data-lucide="heart"></i>Prayer Corner</h3>
+            <p>Lord, heal my heart and help me become stronger without becoming hard. Let Your goodness remain in me, no matter what I’ve been through.</p>
+            <button class="wide-btn" id="prayerBtn">Write a Prayer</button>
+          </section>
+
+          <section class="panel side-card streak-card">
+            <h3><i data-lucide="flame"></i>Consistency Streak</h3>
+            <div class="streak-num" id="streakNum">12 days</div>
+            <div class="streak-sub">Keep seeking Him daily.</div>
+            <div class="days" id="streakDays"></div>
+          </section>
+
+          <section class="panel side-card networks-card">
+            <div class="section-head" style="margin-bottom:7px">
+              <h3 style="margin:0"><i data-lucide="blocks"></i>My Networks</h3>
+              <a class="view-all" href="networks.html">View all</a>
+            </div>
+            <div id="networksList"></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("home");
+    if(user){
+      // waveform
+      const wave = document.getElementById("wave");
+      const heights = [12,18,23,30,19,35,42,29,47,36,55,42,31,48,57,38,28,44,39,51,34,25,19,33,41,29,22,18,26,35,20,17,28,24,18,22,13,18,25,16,11,20,16,13,18,12,10,14,8,13,11,9,12,7,10,8,6,10,7,8,6,9,5,7,6,8,5,6,5,7,5,6,4,5,4,6,4,5,3,4];
+      heights.forEach((h, idx) => {
+        const b = document.createElement("span");
+        b.className = "bar" + (idx < 28 ? " played" : "");
+        b.style.height = Math.max(6,h) + "%";
+        wave.appendChild(b);
+      });
+
+      // episode grid
+      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+      const grid = document.getElementById("episodeGrid");
+      function renderEpisodes(){
+        const all = B.getAllEpisodes();
+        const bookmarks = B.Store.getBookmarks();
+        grid.innerHTML = all.slice(0,4).map(e => {
+          const bookmarked = bookmarks.some(b => b.ref === e.id);
+          return (
+          '<article class="episode-card" data-id="'+e.id+'">' +
+            '<div class="thumb ' + iconClass[e.img] + '">' +
+              '<button class="bookmark-toggle'+(bookmarked?' active':'')+'" data-bm="'+e.id+'"><i data-lucide="bookmark"></i></button>' +
+              (e.uploaded ? '<span class="badge upload-badge">Uploaded</span>' : "") +
+              '<h3>'+B.escapeHtml(e.title).replace(/ /g,'<br>').split('<br>').slice(0,3).join('<br>')+'</h3>' +
+              '<span class="duration">'+e.duration+'</span>' +
+            '</div>' +
+            '<div class="card-info">' +
+              '<strong>'+B.escapeHtml(e.verse||"")+'</strong>' +
+              '<span>'+(e.uploaded ? "by "+B.escapeHtml(e.uploadedBy) : B.fmtDate(e.date))+'</span>' +
+              '<button class="mini-play" data-play="'+e.id+'"><i data-lucide="play"></i></button>' +
+            '</div>' +
+          '</article>');
+        }).join("");
+        lucide.createIcons();
+
+        grid.querySelectorAll("[data-play]").forEach(btn => btn.addEventListener("click", async (ev) => {
+          ev.stopPropagation();
+          const ep = all.find(x => x.id === btn.dataset.play);
+          await window.playEpisode(ep);
+        }));
+        grid.querySelectorAll("[data-bm]").forEach(btn => btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const ep = all.find(x => x.id === btn.dataset.bm);
+          B.Store.toggleBookmark({ type:"episode", ref:ep.id, title:ep.title, snippet:ep.verse });
+          BBLayout.showToast(B.Store.isBookmarked(ep.id) ? "Episode bookmarked" : "Removed bookmark");
+          renderEpisodes();
+        }));
+        grid.querySelectorAll(".episode-card").forEach(card => card.addEventListener("click", async () => {
+          const ep = all.find(x => x.id === card.dataset.id);
+          await window.playEpisode(ep);
+        }));
+      }
+      renderEpisodes();
+      window.onDataChanged = renderEpisodes;
+
+      // scripture network preview (Forgiveness topic)
+      const topic = B.getTopic("forgiveness");
+      const angles = [ -60,-20,20,60,120,160,200 ];
+      const gm = document.getElementById("graphMount");
+      const positions = [
+        {l:19,t:26},{l:50,t:18},{l:82,t:26},{l:18,t:79},{l:50,t:86},{l:82,t:79},{l:50,t:52}
+      ];
+      let svgLines = "";
+      let nodesHTML = "";
+      const cx = 350, cy = 118;
+      const coords = [[120,55],[350,38],[590,55],[105,180],[350,198],[595,180]];
+      coords.forEach(c => { svgLines += '<line x1="'+cx+'" y1="'+cy+'" x2="'+c[0]+'" y2="'+c[1]+'"/>'; });
+      topic.verses.slice(0,6).forEach((ref, i) => {
+        const pos = positions[i];
+        nodesHTML += '<div class="node" style="left:'+pos.l+'%;top:'+pos.t+'%" data-ref="'+B.escapeHtml(ref)+'">'+B.escapeHtml(ref)+'</div>';
+      });
+      nodesHTML += '<div class="node center-node" style="left:50%;top:52%">'+topic.name+'</div>';
+      gm.innerHTML = '<svg viewBox="0 0 700 235" preserveAspectRatio="none">'+svgLines+'</svg>' + nodesHTML;
+      gm.querySelectorAll(".node[data-ref]").forEach(n => n.addEventListener("click", () => window.openVerseModal(n.dataset.ref)));
+
+      // verse of the day
+      document.getElementById("votdLink").addEventListener("click", () => window.openVerseModal("Romans 12:21"));
+      document.getElementById("votdOpen").addEventListener("click", () => window.openVerseModal("Romans 12:21"));
+      function refreshVotdBookmark(){
+        document.getElementById("votdBookmark").classList.toggle("active", B.Store.isBookmarked("Romans 12:21"));
+      }
+      document.getElementById("votdBookmark").addEventListener("click", () => {
+        B.Store.toggleBookmark({ type:"verse", ref:"Romans 12:21", title:"Romans 12:21", snippet:"Be not overcome of evil, but overcome evil with good." });
+        refreshVotdBookmark();
+        BBLayout.showToast(B.Store.isBookmarked("Romans 12:21") ? "Verse bookmarked" : "Removed bookmark");
+      });
+      document.getElementById("votdShare").addEventListener("click", () => {
+        if(navigator.clipboard) navigator.clipboard.writeText("Be not overcome of evil, but overcome evil with good. — Romans 12:21").catch(()=>{});
+        BBLayout.showToast("Verse copied to share");
+      });
+      refreshVotdBookmark();
+
+      // prayer
+      document.getElementById("prayerBtn").addEventListener("click", () => window.openNoteModal("prayer"));
+
+      // streak
+      const streak = B.Store.getStreak();
+      document.getElementById("streakNum").textContent = streak.days + " days";
+      const dayLabels = ["M","T","W","T","F","S","S"];
+      const today = new Date().getDay(); // 0 sun
+      const todayIdx = today === 0 ? 6 : today - 1;
+      document.getElementById("streakDays").innerHTML = dayLabels.map((d,i) => {
+        const off = i > todayIdx;
+        return '<div class="day'+(off?' off':'')+'"><b>'+(off?'':'✓')+'</b>'+d+'</div>';
+      }).join("");
+
+      // networks list
+      document.getElementById("networksList").innerHTML = B.TOPICS.map(t =>
+        '<div class="network-row" data-topic="'+t.id+'">' +
+          '<div class="net-icon '+t.color+'"><i data-lucide="'+t.icon+'"></i></div>' +
+          '<span>'+t.name+'</span><span class="num">'+t.count+'</span><i class="arr" data-lucide="chevron-right"></i>' +
+        '</div>'
+      ).join("");
+      document.querySelectorAll(".network-row").forEach(row => row.addEventListener("click", () => {
+        location.href = "networks.html?topic=" + row.dataset.topic;
+      }));
+
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

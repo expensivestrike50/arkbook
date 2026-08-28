@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Downloads — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Downloads</h1>
+      <p class="page-sub">Mark episodes to keep handy. This list is private to your account.</p>
+
+      <section class="panel list-panel" id="listPanel"></section>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("downloads", { topAction:false });
+    if(user){
+      const panel = document.getElementById("listPanel");
+
+      function render(){
+        const downloaded = B.Store.getDownloads();
+        panel.innerHTML = B.getAllEpisodes().map(e => {
+          const on = downloaded.includes(e.id);
+          return (
+            '<div class="list-row">' +
+              '<div class="list-icon"><i data-lucide="play-circle"></i></div>' +
+              '<div class="list-body">' +
+                '<h4>'+B.escapeHtml(e.title)+'</h4>' +
+                '<div class="list-meta">'+(e.verse ? '<span class="pill">'+B.escapeHtml(e.verse)+'</span>' : "")+'<span>'+e.duration+'</span><span>'+(e.uploaded ? "by "+B.escapeHtml(e.uploadedBy) : B.fmtDate(e.date))+'</span></div>' +
+              '</div>' +
+              '<div class="list-actions">' +
+                '<button data-toggle="'+e.id+'" title="'+(on?"Remove download":"Download")+'" class="'+(on?"active":"")+'"><i data-lucide="'+(on?"circle-check":"download")+'"></i></button>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+        lucide.createIcons();
+        panel.querySelectorAll("[data-toggle]").forEach(btn => btn.addEventListener("click", () => {
+          B.Store.toggleDownload(btn.dataset.toggle);
+          BBLayout.showToast(B.Store.getDownloads().includes(btn.dataset.toggle) ? "Downloaded" : "Removed download");
+          render();
+        }));
+      }
+      render();
+    }
+  </script>
+</body>
+</html>

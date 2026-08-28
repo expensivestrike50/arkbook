@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign in — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="back-home" onclick="location.href='index.html'"><i data-lucide="arrow-left"></i>Back to ArkBook</div>
+
+  <div class="auth-wrap">
+    <div class="panel auth-card">
+      <div class="auth-brand">
+        <div class="brand-name"><span class="accent">Ark</span>Book</div>
+      </div>
+      <h1>Welcome back</h1>
+      <p class="sub">Sign in to reach your notes, prayers and channels.</p>
+
+      <div class="auth-error" id="authError"></div>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Your password" autocomplete="current-password" />
+      </div>
+
+      <button class="primary-btn auth-submit" id="submitBtn"><i data-lucide="log-in"></i><span>Sign in</span></button>
+
+      <div class="auth-foot">Do not have an account yet <a id="toSignup">Sign up</a></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    lucide.createIcons();
+    BB.Auth.redirectIfLoggedIn("home.html");
+
+    document.getElementById("toSignup").addEventListener("click", () => location.href = "signup.html");
+
+    const errorBox = document.getElementById("authError");
+    function showError(msg){
+      errorBox.textContent = msg;
+      errorBox.classList.add("show");
+    }
+
+    async function submit(){
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      const res = await BB.Auth.login({ email, password });
+      btn.disabled = false;
+      if(!res.ok){ showError(res.error); return; }
+      const params = new URLSearchParams(location.search);
+      location.href = params.get("next") ? params.get("next") : "home.html";
+    }
+
+    document.getElementById("submitBtn").addEventListener("click", submit);
+    document.getElementById("password").addEventListener("keydown", (e) => { if(e.key==="Enter") submit(); });
+  </script>
+</body>
+</html>

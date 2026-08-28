@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bible Library — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Bible Library</h1>
+      <p class="page-sub">Every verse behind the devotional, in one place.</p>
+
+      <section class="library-hero">
+        <div class="library-hero-bg"></div>
+        <div class="library-hero-inner">
+          <h2>Look up a verse</h2>
+          <p>Try a reference like Romans 12:21 or Psalm 27:14</p>
+          <div class="library-search">
+            <input id="lookupInput" placeholder="Search by reference" />
+            <button class="primary-btn" id="lookupBtn"><i data-lucide="search"></i><span>Look up</span></button>
+          </div>
+        </div>
+      </section>
+
+      <div id="lookupResultWrap"></div>
+
+      <div class="topic-pill-row" id="topicPills"></div>
+
+      <section class="panel list-panel">
+        <div class="section-head" style="padding:10px 8px 4px">
+          <div class="section-title">Every verse</div>
+          <span style="font-size:11px;color:#8d8a99" id="verseCount"></span>
+        </div>
+        <div id="verseIndex"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("library");
+    if(user){
+      const allRefs = Object.keys(B.VERSES);
+      const resultWrap = document.getElementById("lookupResultWrap");
+
+      function doLookup(query){
+        const q = query.trim().toLowerCase();
+        if(!q){ resultWrap.innerHTML=""; return; }
+        const match = allRefs.find(r => r.toLowerCase() === q) || allRefs.find(r => r.toLowerCase().includes(q));
+        if(!match){
+          resultWrap.innerHTML = '<div class="panel empty-state"><i data-lucide="book-open"></i><h4>No match yet</h4><p>Try a reference like Psalm 27:14.</p></div>';
+        } else {
+          const v = B.getVerse(match);
+          const bookmarked = B.Store.isBookmarked(v.ref);
+          resultWrap.innerHTML = (
+            '<div class="panel verse-result">' +
+              '<div class="verse-modal-ref">'+B.escapeHtml(v.ref)+'</div>' +
+              '<div class="verse-quote">'+B.escapeHtml(v.text)+'</div>' +
+              '<div class="small-actions" style="margin-top:14px">' +
+                '<button class="ghost-btn" id="lookupBmBtn"><i data-lucide="bookmark"></i><span>'+(bookmarked?"Bookmarked":"Bookmark")+'</span></button>' +
+              '</div>' +
+            '</div>'
+          );
+          lucide.createIcons();
+          document.getElementById("lookupBmBtn").addEventListener("click", () => {
+            B.Store.toggleBookmark({ type:"verse", ref:v.ref, title:v.ref, snippet:v.text.slice(0,80) });
+            doLookup(query);
+            BBLayout.showToast(B.Store.isBookmarked(v.ref) ? "Verse bookmarked" : "Removed bookmark");
+          });
+        }
+      }
+
+      document.getElementById("lookupBtn").addEventListener("click", () => doLookup(document.getElementById("lookupInput").value));
+      document.getElementById("lookupInput").addEventListener("keydown", (e) => { if(e.key==="Enter") doLookup(e.target.value); });
+
+      const params = new URLSearchParams(location.search);
+      if(params.get("verse")){
+        document.getElementById("lookupInput").value = params.get("verse");
+        doLookup(params.get("verse"));
+      }
+
+      const pills = document.getElementById("topicPills");
+      pills.innerHTML = B.TOPICS.map(t =>
+        '<button class="topic-pill" data-topic="'+t.id+'">'+B.escapeHtml(t.name)+'<span>'+t.count+'</span></button>'
+      ).join("");
+      pills.querySelectorAll(".topic-pill").forEach(btn => btn.addEventListener("click", () => {
+        location.href = "networks.html?topic=" + btn.dataset.topic;
+      }));
+
+      const sortedRefs = allRefs.slice().sort((a,b) => a.localeCompare(b));
+      document.getElementById("verseCount").textContent = sortedRefs.length + " verses";
+      const indexEl = document.getElementById("verseIndex");
+      indexEl.innerHTML = sortedRefs.map(ref => {
+        const v = B.getVerse(ref);
+        return (
+          '<div class="verse-index-row" data-ref="'+B.escapeHtml(ref)+'">' +
+            '<div class="verse-index-ref">'+B.escapeHtml(ref)+'</div>' +
+            '<div class="verse-index-snip">'+B.escapeHtml(v.text)+'</div>' +
+          '</div>'
+        );
+      }).join("");
+      indexEl.querySelectorAll(".verse-index-row").forEach(row => row.addEventListener("click", () => {
+        window.openVerseModal(row.dataset.ref);
+      }));
+
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

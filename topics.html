@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Topics — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Topics</h1>
+      <p class="page-sub">Every theme woven through the devotional, with the episodes and verses that belong to it.</p>
+
+      <div class="topic-panel-grid" id="topicGrid"></div>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("topics");
+    if(user){
+      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+      const grid = document.getElementById("topicGrid");
+      grid.innerHTML = B.TOPICS.map(t => {
+        const episodeCount = B.getAllEpisodes().filter(e => e.topic === t.id).length;
+        const shown = t.verses.slice(0,3);
+        const rest = t.verses.length - shown.length;
+        const chips = shown.map(v => '<span class="chip">'+B.escapeHtml(v)+'</span>').join("") +
+          (rest > 0 ? '<span class="chip more">+'+rest+' more</span>' : "");
+        return (
+          '<article class="topic-panel ' + iconClass[t.img] + '" data-topic="'+t.id+'">' +
+            '<div class="topic-panel-bg"></div>' +
+            '<div class="topic-panel-count">'+t.count+' verses &middot; '+episodeCount+' episodes</div>' +
+            '<div class="topic-panel-body">' +
+              '<h3>'+B.escapeHtml(t.name)+'</h3>' +
+              '<p>'+B.escapeHtml(t.desc)+'</p>' +
+              '<div class="topic-panel-verses">'+chips+'</div>' +
+            '</div>' +
+          '</article>'
+        );
+      }).join("");
+      grid.querySelectorAll(".topic-panel").forEach(card => card.addEventListener("click", () => {
+        location.href = "networks.html?topic=" + card.dataset.topic;
+      }));
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

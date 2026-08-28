@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign up — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="back-home" onclick="location.href='index.html'"><i data-lucide="arrow-left"></i>Back to ArkBook</div>
+
+  <div class="auth-wrap">
+    <div class="panel auth-card">
+      <div class="auth-brand">
+        <div class="brand-name"><span class="accent">Ark</span>Book</div>
+      </div>
+      <h1>Create your account</h1>
+      <p class="sub">Your notes, prayers and downloads stay private to you.</p>
+
+      <div class="auth-error" id="authError"></div>
+
+      <div class="field">
+        <label>Name</label>
+        <input id="name" placeholder="Your name" autocomplete="name" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="At least 6 characters" autocomplete="new-password" />
+      </div>
+
+      <button class="primary-btn auth-submit" id="submitBtn"><i data-lucide="user-plus"></i><span>Sign up</span></button>
+
+      <div class="auth-foot">Already have an account <a id="toSignin">Sign in</a></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    lucide.createIcons();
+    BB.Auth.redirectIfLoggedIn("home.html");
+
+    document.getElementById("toSignin").addEventListener("click", () => location.href = "signin.html");
+
+    const errorBox = document.getElementById("authError");
+    function showError(msg){
+      errorBox.textContent = msg;
+      errorBox.classList.add("show");
+    }
+
+    async function submit(){
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      const res = await BB.Auth.signup({ name, email, password });
+      btn.disabled = false;
+      if(!res.ok){ showError(res.error); return; }
+      location.href = "home.html";
+    }
+
+    document.getElementById("submitBtn").addEventListener("click", submit);
+    document.getElementById("password").addEventListener("keydown", (e) => { if(e.key==="Enter") submit(); });
+  </script>
+</body>
+</html>

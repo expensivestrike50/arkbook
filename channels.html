@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Channels — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Channels</h1>
+      <p class="page-sub">Public channels are open to everyone and appear in search. Private channels are only visible to you.</p>
+
+      <div class="channels-toolbar">
+        <div class="tabs" id="viewTabs">
+          <button class="tab-btn active" data-view="public">Public</button>
+          <button class="tab-btn" data-view="mine">My channels</button>
+        </div>
+      </div>
+
+      <div class="channel-grid" id="channelGrid"></div>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <!-- CREATE CHANNEL MODAL -->
+  <div class="modal" id="channelModal">
+    <div class="modal-box wide">
+      <div class="modal-head"><h2>New Channel</h2><button class="close-btn" id="closeChannelModal"><i data-lucide="x"></i></button></div>
+
+      <div class="form-grid">
+        <div class="field full">
+          <label>Channel name</label>
+          <input id="chName" placeholder="Morning Prayers" />
+          <div class="field-error" id="chNameError"></div>
+        </div>
+
+        <div class="field full">
+          <label>Visibility</label>
+          <div class="radio-row">
+            <div class="radio-opt selected" data-vis="public">
+              <strong>Public</strong><br>Anyone can find and listen, and it appears in search results.
+            </div>
+            <div class="radio-opt" data-vis="private">
+              <strong>Private</strong><br>Only visible to you when you are signed in.
+            </div>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Description</label>
+          <textarea id="chDesc" placeholder="Tell listeners what this channel is about"></textarea>
+        </div>
+
+        <div class="field full">
+          <label>Links</label>
+          <div id="chLinks"></div>
+          <button class="ghost-btn" id="addLinkBtn" type="button"><i data-lucide="plus"></i><span>Add a link</span></button>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="ghost-btn" id="cancelChannelModal">Cancel</button>
+        <button class="primary-btn" id="saveChannelBtn"><i data-lucide="check"></i><span>Create channel</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("channels", { topAction:{ label:"New channel", icon:"plus", onClick: () => openChannelModal() } });
+    if(user){
+      let view = "public";
+      const grid = document.getElementById("channelGrid");
+      const viewTabs = document.getElementById("viewTabs");
+
+      function initials(name){ return String(name||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
+
+      function render(){
+        const list = view === "public" ? B.Channels.getPublic() : B.Channels.getMine();
+        if(!list.length){
+          grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i data-lucide="radio"></i><h4>'+
+            (view==="public" ? "No public channels yet" : "You have not created a channel yet") +
+            '</h4><p>'+(view==="public" ? "Be the first to start one." : "Start a public or private channel to share audio.")+'</p></div>';
+          lucide.createIcons();
+          return;
+        }
+        grid.innerHTML = list.map(c => (
+          '<article class="panel channel-card" data-id="'+c.id+'">' +
+            '<div class="channel-top">' +
+              '<div class="channel-icon">'+initials(c.name)+'</div>' +
+              '<div><h4 class="channel-name">'+B.escapeHtml(c.name)+'</h4><div class="channel-owner">by '+B.escapeHtml(c.ownerName)+'</div></div>' +
+            '</div>' +
+            '<p class="channel-desc">'+B.escapeHtml(c.description || "No description yet.")+'</p>' +
+            '<div class="channel-foot">' +
+              '<span class="vis-pill'+(c.visibility==="public"?" public":"")+'">'+c.visibility+'</span>' +
+              '<span>'+(c.episodes?c.episodes.length:0)+' episodes</span>' +
+            '</div>' +
+          '</article>'
+        )).join("");
+        lucide.createIcons();
+        grid.querySelectorAll(".channel-card").forEach(card => card.addEventListener("click", () => {
+          location.href = "channel.html?id=" + card.dataset.id;
+        }));
+      }
+
+      viewTabs.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => {
+        view = btn.dataset.view;
+        viewTabs.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      }));
+
+      render();
+
+      /* ---- create channel modal ---- */
+      let selectedVis = "public";
+      let linkCount = 0;
+
+      function addLinkRow(label, url){
+        linkCount++;
+        const row = document.createElement("div");
+        row.className = "link-row";
+        row.innerHTML =
+          '<input placeholder="Label, e.g. Website" class="linkLabel" value="'+(label?B.escapeHtml(label):"")+'" />' +
+          '<input placeholder="https://" class="linkUrl" value="'+(url?B.escapeHtml(url):"")+'" />' +
+          '<button type="button"><i data-lucide="x"></i></button>';
+        row.querySelector("button").addEventListener("click", () => row.remove());
+        document.getElementById("chLinks").appendChild(row);
+        lucide.createIcons();
+      }
+
+      document.getElementById("addLinkBtn").addEventListener("click", () => addLinkRow());
+
+      document.querySelectorAll(".radio-opt").forEach(opt => opt.addEventListener("click", () => {
+        document.querySelectorAll(".radio-opt").forEach(o=>o.classList.remove("selected"));
+        opt.classList.add("selected");
+        selectedVis = opt.dataset.vis;
+      }));
+
+      window.openChannelModal = function(){
+        document.getElementById("chName").value = "";
+        document.getElementById("chDesc").value = "";
+        document.getElementById("chNameError").textContent = "";
+        document.getElementById("chLinks").innerHTML = "";
+        selectedVis = "public";
+        document.querySelectorAll(".radio-opt").forEach(o=>o.classList.toggle("selected", o.dataset.vis==="public"));
+        addLinkRow();
+        document.getElementById("channelModal").classList.add("open");
+      };
+      function closeChannelModal(){ document.getElementById("channelModal").classList.remove("open"); }
+      document.getElementById("closeChannelModal").addEventListener("click", closeChannelModal);
+      document.getElementById("cancelChannelModal").addEventListener("click", closeChannelModal);
+      document.getElementById("channelModal").addEventListener("click", (e)=>{ if(e.target.id==="channelModal") closeChannelModal(); });
+
+      document.getElementById("saveChannelBtn").addEventListener("click", () => {
+        const name = document.getElementById("chName").value.trim();
+        if(!name){ document.getElementById("chNameError").textContent = "Please give your channel a name."; return; }
+        const description = document.getElementById("chDesc").value.trim();
+        const links = Array.from(document.querySelectorAll("#chLinks .link-row")).map(row => ({
+          label: row.querySelector(".linkLabel").value.trim() || "Link",
+          url: row.querySelector(".linkUrl").value.trim()
+        })).filter(l => l.url);
+
+        const channel = B.Channels.create({ name, description, visibility: selectedVis, links });
+        closeChannelModal();
+        BBLayout.showToast("Channel created");
+        location.href = "channel.html?id=" + channel.id;
+      });
+    }
+  </script>
+</body>
+</html>

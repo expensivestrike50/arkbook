@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Networks — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebarMount"></aside>
+    <main class="main">
+      <header class="topbar" id="topbarMount"></header>
+
+      <h1 class="page-title">Scripture Networks</h1>
+      <p class="page-sub">Each network is centered on a topic. Every connected point is a verse. Click a verse to read it.</p>
+
+      <div class="channels-toolbar">
+        <div class="tabs" id="topicTabs"></div>
+      </div>
+
+      <section class="panel network" style="margin-top:0">
+        <div class="section-head">
+          <div class="section-title" id="graphTitle">Forgiveness</div>
+          <span style="font-size:11px;color:#8d8a99" id="graphSub">7 connected verses</span>
+        </div>
+        <div class="graph tall" id="graphMount"></div>
+      </section>
+
+      <section class="panel list-panel" style="margin-top:14px">
+        <div class="section-head" style="padding:10px 8px 4px"><div class="section-title">Verses in this network</div></div>
+        <div id="verseList"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="bottom-player" id="playerMount"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const B = window.BB;
+    const user = BBLayout.init("networks");
+    if(user){
+      const tabs = document.getElementById("topicTabs");
+      tabs.innerHTML = B.TOPICS.map(t => '<button class="tab-btn" data-topic="'+t.id+'">'+t.name+'</button>').join("");
+
+      function layout(topic){
+        const n = topic.verses.length;
+        const cxPct = 50, cyPct = 50, rxPct = 40, ryPct = 34;
+        return topic.verses.map((ref,i) => {
+          const angle = (-90 + i*(360/n)) * Math.PI/180;
+          return { ref, l: cxPct + rxPct*Math.cos(angle), t: cyPct + ryPct*Math.sin(angle) };
+        });
+      }
+
+      function renderTopic(topicId){
+        const topic = B.getTopic(topicId) || B.TOPICS[0];
+        tabs.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.topic===topic.id));
+
+        document.getElementById("graphTitle").textContent = topic.name;
+        document.getElementById("graphSub").textContent = topic.verses.length + " connected verses";
+
+        const nodes = layout(topic);
+        const cx = 500, cy = 230;
+        let lines = "";
+        let nodesHTML = "";
+        nodes.forEach(n => {
+          const x = n.l/100*1000, y = n.t/100*460;
+          lines += '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'"/>';
+          nodesHTML += '<div class="node" style="left:'+n.l+'%;top:'+n.t+'%" data-ref="'+B.escapeHtml(n.ref)+'">'+B.escapeHtml(n.ref)+'</div>';
+        });
+        nodesHTML += '<div class="node center-node" style="left:50%;top:50%">'+topic.name+'</div>';
+
+        const gm = document.getElementById("graphMount");
+        gm.innerHTML = '<svg viewBox="0 0 1000 460" preserveAspectRatio="none">'+lines+'</svg>' + nodesHTML;
+        gm.querySelectorAll(".node[data-ref]").forEach(el => el.addEventListener("click", () => window.openVerseModal(el.dataset.ref)));
+        lucide.createIcons();
+
+        const listEl = document.getElementById("verseList");
+        const bookmarks = B.Store.getBookmarks();
+        listEl.innerHTML = topic.verses.map(ref => {
+          const v = B.getVerse(ref);
+          const bookmarked = bookmarks.some(b => b.ref === v.ref);
+          return (
+            '<div class="list-row">' +
+              '<div class="list-icon"><i data-lucide="book-open"></i></div>' +
+              '<div class="list-body">' +
+                '<h4>'+B.escapeHtml(v.ref)+'</h4>' +
+                '<p>'+B.escapeHtml(v.text.length>140 ? v.text.slice(0,140)+"…" : v.text)+'</p>' +
+              '</div>' +
+              '<div class="list-actions">' +
+                '<button data-open="'+B.escapeHtml(v.ref)+'" title="Read"><i data-lucide="maximize-2"></i></button>' +
+                '<button data-bm="'+B.escapeHtml(v.ref)+'" title="Bookmark" class="'+(bookmarked?"active":"")+'"><i data-lucide="bookmark"></i></button>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+        lucide.createIcons();
+        listEl.querySelectorAll("[data-open]").forEach(btn => btn.addEventListener("click", () => window.openVerseModal(btn.dataset.open)));
+        listEl.querySelectorAll("[data-bm]").forEach(btn => btn.addEventListener("click", () => {
+          const v = B.getVerse(btn.dataset.bm);
+          B.Store.toggleBookmark({ type:"verse", ref:v.ref, title:v.ref, snippet:v.text.slice(0,80) });
+          BBLayout.showToast(B.Store.isBookmarked(v.ref) ? "Verse bookmarked" : "Removed bookmark");
+          renderTopic(topic.id);
+        }));
+      }
+
+      tabs.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => renderTopic(btn.dataset.topic)));
+
+      const params = new URLSearchParams(location.search);
+      renderTopic(params.get("topic") || "forgiveness");
+    }
+  </script>
+</body>
+</html>
