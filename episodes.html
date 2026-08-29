@@ -120,6 +120,7 @@
               '<strong>'+B.escapeHtml(e.verse||"")+'</strong>' +
               '<span>'+(e.uploaded ? "by "+B.escapeHtml(e.uploadedBy) : B.fmtDate(e.date))+(downloaded?" &middot; Downloaded":"")+'</span>' +
               (canDelete ? '<button class="mini-del" data-del="'+e.id+'" title="Delete"><i data-lucide="trash-2"></i></button>' : "") +
+              '<button class="mini-share'+(canDelete?" shift":"")+'" data-share="'+e.id+'" title="Share (no sign-in needed)"><i data-lucide="share-2"></i></button>' +
               '<button class="mini-play" data-play="'+e.id+'"><i data-lucide="play"></i></button>' +
             '</div>' +
           '</article>');
@@ -144,6 +145,10 @@
           B.UserEpisodes.remove(btn.dataset.del);
           BBLayout.showToast("Episode deleted");
           render();
+        }));
+        grid.querySelectorAll("[data-share]").forEach(btn => btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          window.shareEpisode(btn.dataset.share);
         }));
         grid.querySelectorAll(".episode-card").forEach(card => card.addEventListener("click", async () => {
           const ep = all.find(x => x.id === card.dataset.id);

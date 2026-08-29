@@ -360,6 +360,12 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   background:#2c1420;color:#fb98a1;display:grid;place-items:center;cursor:pointer;
 }
 .mini-del svg{width:13px;height:13px}
+.mini-share{
+  position:absolute;right:44px;top:8px;width:27px;height:27px;border-radius:50%;border:0;
+  background:#221f33;color:#c8b8ec;display:grid;place-items:center;cursor:pointer;
+}
+.mini-share svg{width:13px;height:13px}
+.mini-share.shift{right:80px}
 .upload-badge{position:relative;z-index:2;display:inline-block;margin-bottom:8px}
 
 .art-pick{display:flex;gap:8px}
@@ -735,6 +741,12 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   background:#131420;color:#cfc9df;display:grid;place-items:center;cursor:pointer;
 }
 .fs-close svg{width:18px;height:18px}
+.fs-share{
+  position:absolute;top:24px;right:24px;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);
+  background:#131420;color:#cfc9df;display:grid;place-items:center;cursor:pointer;
+}
+.fs-share:hover{background:#1a1b28;color:#fff}
+.fs-share svg{width:17px;height:17px}
 .fs-inner{width:min(420px,88vw);display:flex;flex-direction:column;align-items:center;text-align:center}
 .fs-art{
   width:min(320px,72vw);height:min(320px,72vw);border-radius:20px;margin-bottom:32px;

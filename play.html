@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Episode — ArkBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<link rel="stylesheet" href="css/app.css" />
+<style>
+  body{
+    min-height:100vh;display:flex;flex-direction:column;
+    background:
+      radial-gradient(circle at 50% 15%, rgba(103,62,189,.22), transparent 45%),
+      linear-gradient(180deg,#0c0d16 0%, #08090f 100%);
+  }
+  .share-top{
+    width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+    padding:22px 26px;
+  }
+  .share-brand{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .share-main{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;width:100%;box-sizing:border-box}
+  .share-desc{font-size:12px;color:#c6c2cc;line-height:1.6;max-width:420px;margin:22px auto 0;text-align:center}
+  .share-note{font-size:11px;color:#8d8a99;margin-top:14px;text-align:center}
+  .share-foot{padding:0 24px 36px;text-align:center}
+  .share-notfound{color:#c6c2cc;text-align:center;max-width:340px}
+  .share-notfound svg{width:34px;height:34px;color:#565368;margin-bottom:14px}
+  .share-notfound h4{font-family:"Playfair Display",serif;margin:0 0 8px;color:#efe8fa}
+  .share-notfound p{font-size:12px;color:#8d8a99;margin:0}
+</style>
+</head>
+<body>
+  <div class="share-top">
+    <div class="share-brand" onclick="location.href='index.html'">
+      <div class="brand-name"><span class="accent">Ark</span>Book</div>
+    </div>
+    <a class="ghost-btn" href="signin.html"><span>Sign in</span></a>
+  </div>
+
+  <div class="share-main">
+    <div class="fs-inner" id="playerBox" style="display:none">
+      <div class="fs-art img-cross" id="art"></div>
+      <div class="fs-wave" id="wave"></div>
+      <div class="fs-meta"><h2 id="epTitle"></h2><p id="epVerse"></p></div>
+      <div class="fs-progress">
+        <span class="time time-current">00:00</span>
+        <div class="track progress-track" id="track"><div class="track-fill"></div></div>
+        <span class="time time-duration">00:00</span>
+      </div>
+      <div class="fs-controls">
+        <button class="small-skip" data-skip="-15"><i data-lucide="rotate-ccw"></i><small>15</small></button>
+        <button class="play-lg" id="playBtn"><i data-lucide="play"></i></button>
+        <button class="small-skip" data-skip="15"><i data-lucide="rotate-cw"></i><small>15</small></button>
+      </div>
+      <p class="share-desc" id="epDesc"></p>
+      <p class="share-note" id="unavailableNote" style="display:none">This episode's audio was uploaded from a different browser or device, so it can't play here.</p>
+    </div>
+
+    <div class="share-notfound" id="notFound" style="display:none">
+      <i data-lucide="alert-circle"></i>
+      <h4>Episode not found</h4>
+      <p>This link may be broken, or the episode was removed.</p>
+    </div>
+  </div>
+
+  <div class="share-foot">
+    <a class="primary-btn" href="signup.html"><i data-lucide="sparkles"></i><span>Explore more devotionals on ArkBook</span></a>
+  </div>
+
+  <audio id="bbAudio" preload="metadata" style="display:none"></audio>
+
+  <script src="js/data.js"></script>
+  <script>
+    const B = window.BB;
+    const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+    const params = new URLSearchParams(location.search);
+    const ep = B.getAllEpisodes().find(e => e.id === params.get("ep"));
+
+    if(!ep){
+      document.getElementById("notFound").style.display = "block";
+      lucide.createIcons();
+    } else {
+      document.title = ep.title + " — ArkBook";
+      document.getElementById("playerBox").style.display = "flex";
+      document.getElementById("epTitle").textContent = ep.title;
+      document.getElementById("epVerse").textContent = ep.verse || "";
+      document.getElementById("epDesc").textContent = ep.desc || "";
+      document.getElementById("art").className = "fs-art " + (iconClass[ep.img] || "img-cross");
+
+      const wave = document.getElementById("wave");
+      for(let i=0;i<56;i++){
+        const b = document.createElement("span");
+        const h = Math.round(18 + Math.abs(Math.sin(i*0.7)) * 60);
+        b.className = "bar"; b.style.height = h + "%"; b.style.setProperty("--i", i);
+        wave.appendChild(b);
+      }
+
+      const audioEl = document.getElementById("bbAudio");
+      const playBtn = document.getElementById("playBtn");
+      const fills = document.querySelectorAll(".track-fill");
+      const curs = document.querySelectorAll(".time-current");
+      const durs = document.querySelectorAll(".time-duration");
+
+      function fmtTime(s){
+        const m = Math.floor(s/60).toString().padStart(2,"0");
+        const ss = Math.floor(s%60).toString().padStart(2,"0");
+        return m + ":" + ss;
+      }
+
+      let mode = "demo";
+      let demoTimer = null, demoProgress = 0, demoDuration = ep.seconds || 120, demoPlaying = false;
+
+      function paint(pct, cur, dur, playing){
+        fills.forEach(el => el.style.width = pct + "%");
+        curs.forEach(el => el.textContent = fmtTime(cur));
+        durs.forEach(el => el.textContent = fmtTime(dur));
+        playBtn.innerHTML = '<i data-lucide="' + (playing ? "pause" : "play") + '"></i>';
+        wave.classList.toggle("playing", playing);
+        const bars = wave.querySelectorAll(".bar");
+        const played = Math.round(bars.length * pct/100);
+        bars.forEach((b,i) => b.classList.toggle("played", i < played));
+        lucide.createIcons();
+      }
+
+      function updateReal(){
+        const d = audioEl.duration || 0;
+        const pct = d ? (audioEl.currentTime/d*100) : 0;
+        paint(pct, audioEl.currentTime||0, d, !audioEl.paused);
+      }
+      function updateDemo(){
+        const pct = Math.min(100, demoProgress/demoDuration*100);
+        paint(pct, demoProgress, demoDuration, demoPlaying);
+      }
+
+      function togglePlay(){
+        if(mode === "real"){
+          if(audioEl.paused) audioEl.play().catch(()=>{}); else audioEl.pause();
+        } else if(mode === "demo"){
+          demoPlaying = !demoPlaying;
+          clearInterval(demoTimer);
+          if(demoPlaying){
+            demoTimer = setInterval(() => {
+              demoProgress += 1;
+              if(demoProgress >= demoDuration){ demoProgress = 0; demoPlaying = false; clearInterval(demoTimer); }
+              updateDemo();
+            }, 1000);
+          }
+          updateDemo();
+        }
+      }
+
+      playBtn.addEventListener("click", togglePlay);
+      document.querySelectorAll("[data-skip]").forEach(btn => btn.addEventListener("click", () => {
+        const s = +btn.dataset.skip;
+        if(mode === "real"){
+          audioEl.currentTime = Math.max(0, Math.min(audioEl.duration||0, audioEl.currentTime+s));
+          updateReal();
+        } else if(mode === "demo"){
+          demoProgress = Math.max(0, Math.min(demoDuration, demoProgress+s));
+          updateDemo();
+        }
+      }));
+      document.getElementById("track").addEventListener("click", (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const frac = (e.clientX-rect.left)/rect.width;
+        if(mode === "real"){
+          if(audioEl.duration) audioEl.currentTime = frac*audioEl.duration;
+          updateReal();
+        } else if(mode === "demo"){
+          demoProgress = Math.round(frac*demoDuration);
+          updateDemo();
+        }
+      });
+      ["timeupdate","play","pause","loadedmetadata"].forEach(ev => {
+        audioEl.addEventListener(ev, () => { if(mode === "real") updateReal(); });
+      });
+
+      if("mediaSession" in navigator){
+        navigator.mediaSession.metadata = new MediaMetadata({ title: ep.title, artist: "ArkBook", album: ep.verse || "" });
+        navigator.mediaSession.setActionHandler("play", togglePlay);
+        navigator.mediaSession.setActionHandler("pause", togglePlay);
+      }
+
+      (async function load(){
+        if(ep.audioUrl){
+          mode = "real";
+          audioEl.src = ep.audioUrl;
+          updateReal();
+        } else if(ep.audioId){
+          const blob = await B.Audio.get(ep.audioId);
+          if(blob){
+            mode = "real";
+            audioEl.src = URL.createObjectURL(blob);
+            updateReal();
+          } else {
+            mode = "unavailable";
+            playBtn.disabled = true;
+            document.getElementById("unavailableNote").style.display = "block";
+          }
+        } else {
+          mode = "demo";
+          updateDemo();
+        }
+      })();
+
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

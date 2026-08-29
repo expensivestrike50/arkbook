@@ -175,6 +175,7 @@
             '<div class="card-info">' +
               '<strong>'+B.escapeHtml(e.verse||"")+'</strong>' +
               '<span>'+(e.uploaded ? "by "+B.escapeHtml(e.uploadedBy) : B.fmtDate(e.date))+'</span>' +
+              '<button class="mini-share" data-share="'+e.id+'" title="Share (no sign-in needed)"><i data-lucide="share-2"></i></button>' +
               '<button class="mini-play" data-play="'+e.id+'"><i data-lucide="play"></i></button>' +
             '</div>' +
           '</article>');
@@ -196,6 +197,10 @@
         grid.querySelectorAll(".episode-card").forEach(card => card.addEventListener("click", async () => {
           const ep = all.find(x => x.id === card.dataset.id);
           await window.playEpisode(ep);
+        }));
+        grid.querySelectorAll("[data-share]").forEach(btn => btn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          window.shareEpisode(btn.dataset.share);
         }));
       }
       renderEpisodes();

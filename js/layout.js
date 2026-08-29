@@ -94,6 +94,7 @@
     return (
       '<div class="fs-player" id="fsPlayer">' +
         '<button class="fs-close" id="fsCloseBtn"><i data-lucide="chevron-down"></i></button>' +
+        '<button class="fs-share" id="fsShareBtn" title="Share this episode"><i data-lucide="share-2"></i></button>' +
         '<div class="fs-inner">' +
           '<div class="fs-art img-cross" id="fsArt"></div>' +
           '<div class="fs-wave" id="fsWave"></div>' +
@@ -174,6 +175,21 @@
     clearTimeout(showToast._t);
     showToast._t = setTimeout(()=> toast.classList.remove("show"), 2600);
   }
+
+  /* Copies a public, sign-in-free link to play.html for the given episode
+     id. play.html only reads shared/static episode data (never anything
+     gated behind Auth), so it works for anyone the link is sent to. */
+  window.shareEpisode = function(epId){
+    const url = new URL("play.html?ep=" + encodeURIComponent(epId), location.href).toString();
+    function done(ok){
+      showToast(ok ? "Link copied — anyone can play it without signing in" : "Couldn't copy — copy this link: " + url, ok ? "check-circle" : "alert-circle");
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(() => done(true)).catch(() => done(false));
+    } else {
+      done(false);
+    }
+  };
 
   /* ------------------------------ Search UI ------------------------------ */
   function wireSearch(){
@@ -514,9 +530,17 @@
     const openBtn = document.getElementById("fsOpenBtn");
     const nowPlaying = document.getElementById("nowPlayingOpen");
     const closeBtn = document.getElementById("fsCloseBtn");
+    const shareBtn = document.getElementById("fsShareBtn");
     if(!fs || !openBtn) return;
 
     renderFsWaveBars();
+
+    if(shareBtn){
+      shareBtn.addEventListener("click", () => {
+        const epId = window.BB_currentEpisodeId && window.BB_currentEpisodeId();
+        if(epId) window.shareEpisode(epId);
+      });
+    }
 
     function open(){
       fs.classList.add("open");
