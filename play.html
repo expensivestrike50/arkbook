@@ -97,6 +97,10 @@
       verseModal.classList.add("open");
     }
     function closeVerse(){ verseModal.classList.remove("open"); }
+    // renderGraph()'s nodes already call window.openVerseModal on click
+    // (that's how the app's other pages wire theirs up) — hook into the
+    // same convention instead of double-binding our own listener too.
+    window.openVerseModal = openVerse;
     document.getElementById("verseModalClose").addEventListener("click", closeVerse);
     verseModal.addEventListener("click", (e) => { if(e.target === verseModal) closeVerse(); });
     window.addEventListener("keydown", (e) => { if(e.key === "Escape") closeVerse(); });
@@ -114,11 +118,7 @@
 
       const topic = ep.topic && B.getTopic(ep.topic);
       if(topic && B.getTopicVerseRefs(topic).length){
-        const artNetwork = document.getElementById("artNetwork");
-        B.renderGraph(artNetwork, topic, { compact:true, rx:38, ry:38 });
-        artNetwork.querySelectorAll(".gnode[data-ref]").forEach(node => {
-          node.addEventListener("click", () => openVerse(node.dataset.ref));
-        });
+        B.renderGraph(document.getElementById("artNetwork"), topic, { compact:true, rx:38, ry:38 });
       }
 
       const wave = document.getElementById("wave");
