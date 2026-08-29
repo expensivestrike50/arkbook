@@ -36,6 +36,8 @@
   .art-network svg line.deco{stroke:rgba(255,255,255,.22)}
   .art-network .label{color:#fff;text-shadow:0 1px 5px rgba(0,0,0,.85)}
   .art-network .gnode.center .label{font-size:12.5px}
+  .art-network .gnode[data-ref]{cursor:pointer}
+  .modal-head h2{font-family:"Roboto Slab",serif}
 </style>
 </head>
 <body>
@@ -68,6 +70,14 @@
     </div>
   </div>
 
+  <div class="modal" id="verseModal">
+    <div class="modal-box">
+      <div class="modal-head"><h2>Scripture</h2><button class="close-btn" id="verseModalClose"><i data-lucide="x"></i></button></div>
+      <div class="verse-modal-ref" id="verseModalRef"></div>
+      <div class="verse-modal-text" id="verseModalText"></div>
+    </div>
+  </div>
+
   <audio id="bbAudio" preload="metadata" style="display:none"></audio>
 
   <script src="js/data.js"></script>
@@ -76,6 +86,20 @@
     const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
     const params = new URLSearchParams(location.search);
     const ep = B.getAllEpisodes().find(e => e.id === params.get("ep"));
+
+    /* Reading a verse never touches the <audio> element or its playback
+       state below — opening/closing this modal is purely visual. */
+    const verseModal = document.getElementById("verseModal");
+    function openVerse(ref){
+      const v = B.getVerse(ref);
+      document.getElementById("verseModalRef").textContent = v.ref;
+      document.getElementById("verseModalText").textContent = v.text;
+      verseModal.classList.add("open");
+    }
+    function closeVerse(){ verseModal.classList.remove("open"); }
+    document.getElementById("verseModalClose").addEventListener("click", closeVerse);
+    verseModal.addEventListener("click", (e) => { if(e.target === verseModal) closeVerse(); });
+    window.addEventListener("keydown", (e) => { if(e.key === "Escape") closeVerse(); });
 
     if(!ep){
       document.getElementById("notFound").style.display = "block";
@@ -90,7 +114,11 @@
 
       const topic = ep.topic && B.getTopic(ep.topic);
       if(topic && B.getTopicVerseRefs(topic).length){
-        B.renderGraph(document.getElementById("artNetwork"), topic, { compact:true, rx:38, ry:38 });
+        const artNetwork = document.getElementById("artNetwork");
+        B.renderGraph(artNetwork, topic, { compact:true, rx:38, ry:38 });
+        artNetwork.querySelectorAll(".gnode[data-ref]").forEach(node => {
+          node.addEventListener("click", () => openVerse(node.dataset.ref));
+        });
       }
 
       const wave = document.getElementById("wave");
