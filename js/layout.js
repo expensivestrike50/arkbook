@@ -246,6 +246,13 @@
      bottom bar and in the full screen view — stays in sync automatically,
      since they all read from and act on this one piece of state. */
   const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+  const mediaArt = {
+    cross:"https://images.unsplash.com/photo-1672357867189-7f25eace961f?w=512&q=70&fm=jpg&fit=crop&auto=format",
+    sprout:"https://images.unsplash.com/photo-1542005638-c3507d86bbc9?w=512&q=70&fm=jpg&fit=crop&auto=format",
+    heart:"https://images.unsplash.com/photo-1611434591878-56a2a4fac5f3?w=512&q=70&fm=jpg&fit=crop&auto=format",
+    door:"https://images.unsplash.com/photo-1723713296731-a82e99a1873e?w=512&q=70&fm=jpg&fit=crop&auto=format",
+    mountain:"https://images.unsplash.com/photo-1519681393784-d120267933ba?w=512&q=70&fm=jpg&fit=crop&auto=format"
+  };
 
   /* Playback survives navigation between pages (a fresh page load, since
      this is a static multi-page app with no client-side router) by saving
@@ -280,6 +287,20 @@
       }catch(e){}
     }
     window.BB_currentEpisodeId = function(){ return state.epId; };
+
+    /* Registers this page's controls with the OS/browser media session so
+       switching tabs, apps, or locking the screen doesn't interrupt or
+       drop control of playback — the browser treats it as an active
+       background media session rather than just an unmanaged tab. */
+    function setMediaPlaybackState(playing){
+      if("mediaSession" in navigator) navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+    }
+    if("mediaSession" in navigator){
+      navigator.mediaSession.setActionHandler("play", () => window.togglePlay());
+      navigator.mediaSession.setActionHandler("pause", () => window.togglePlay());
+      navigator.mediaSession.setActionHandler("seekbackward", () => skip(-15));
+      navigator.mediaSession.setActionHandler("seekforward", () => skip(15));
+    }
 
     function fillsAndTimes(){
       return {
@@ -356,13 +377,14 @@
       if(state.playing){
         timer = setInterval(()=>{
           state.progress += 1;
-          if(state.progress >= state.duration){ state.progress = 0; state.playing = false; clearInterval(timer); clearPersistedPlayback(); }
+          if(state.progress >= state.duration){ state.progress = 0; state.playing = false; clearInterval(timer); clearPersistedPlayback(); setMediaPlaybackState(false); }
           updateDemo();
           persistPlayback();
         },1000);
       }
       updateDemo();
       persistPlayback(true);
+      setMediaPlaybackState(state.playing);
     };
 
     document.querySelectorAll(".play-toggle").forEach(btn => btn.addEventListener("click", window.togglePlay));
@@ -377,9 +399,14 @@
         if(state.mode !== "real") return;
         updateReal();
         persistPlayback(ev === "play" || ev === "pause");
+        if(ev === "play" || ev === "pause") setMediaPlaybackState(ev === "play");
       });
     });
-    audioEl.addEventListener("ended", () => { if(state.mode === "real") clearPersistedPlayback(); });
+    audioEl.addEventListener("ended", () => {
+      if(state.mode !== "real") return;
+      clearPersistedPlayback();
+      setMediaPlaybackState(false);
+    });
 
     /* epId: the episode's id, used to persist and resume playback across
        page navigations (see NOW_PLAYING_KEY above) — null for callers that
@@ -400,6 +427,15 @@
       if(cover) cover.className = "now-cover " + smallCls;
       const art = document.getElementById("fsArt");
       if(art) art.className = "fs-art " + bigCls;
+
+      if("mediaSession" in navigator){
+        try{
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: title, artist: "ArkBook", album: verse,
+            artwork: [{ src: mediaArt[img] || mediaArt.cross, sizes:"512x512", type:"image/jpeg" }]
+          });
+        }catch(e){}
+      }
 
       clearInterval(timer);
       audioEl.pause();
