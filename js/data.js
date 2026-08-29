@@ -195,7 +195,7 @@
   /* --------------------------- Static content --------------------------- */
 
   const EPISODES = [
-    { id:"ep1", title:"Don’t Be Discouraged Because You’re Not There Yet", verse:"Philippians 3:13–14", duration:"3:21", seconds:201, date:"2025-05-29", topic:"process", img:"sprout", desc:"You are not behind. You are exactly where the process has you, and the process is not finished.", audioUrl:"assets/audio/dont-be-discouraged-not-there-yet.mp3" },
+    { id:"ep1", title:"Don’t Be Discouraged Because You’re Not There Yet", verse:"Philippians 3:13–14", duration:"3:21", seconds:201, date:"2025-05-29", topic:"process", img:"church", desc:"You are not behind. You are exactly where the process has you, and the process is not finished.", audioUrl:"assets/audio/dont-be-discouraged-not-there-yet.mp3" },
     { id:"ep13", title:"Don’t Become What Hurt You", verse:"Romans 12:21", duration:"2:50", seconds:170, date:"2025-05-16", topic:"forgiveness", img:"cross", desc:"What happened to you should teach you, not turn you into someone you were never meant to become.", audioUrl:"assets/audio/dont-become-what-hurt-you.mp3" },
     { id:"ep2", title:"When God Makes You Wait", verse:"Psalm 27:14", duration:"2:11", seconds:131, date:"2025-05-27", topic:"waiting", img:"sprout", desc:"Waiting is not wasted time. It is where God builds what a rushed answer never could." },
     { id:"ep3", title:"Guard Your Heart", verse:"Proverbs 4:23", duration:"1:58", seconds:118, date:"2025-05-26", topic:"trust", img:"heart", desc:"Everything you do flows from your heart. Protecting it is not selfish, it is wise." },

@@ -78,7 +78,7 @@
     const B = window.BB;
     const user = BBLayout.init("episodes", { topAction:{ label:"Upload episode", icon:"upload", onClick: () => openUploadModal() } });
     if(user){
-      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain", church:"img-church" };
       const grid = document.getElementById("episodeGrid");
       let activeTopic = "all";
 
@@ -166,7 +166,7 @@
       }
 
       /* ---- upload modal ---- */
-      const artOptions = ["cross","sprout","heart","door","mountain"];
+      const artOptions = ["cross","sprout","heart","door","mountain","church"];
       let selectedArt = "cross";
       let chosenFile = null;
 

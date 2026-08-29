@@ -31,7 +31,7 @@
     const B = window.BB;
     const user = BBLayout.init("topics");
     if(user){
-      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain", church:"img-church" };
       const grid = document.getElementById("topicGrid");
       grid.innerHTML = B.getAllTopics().map(t => {
         const refs = B.getTopicVerseRefs(t);

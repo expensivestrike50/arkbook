@@ -261,7 +261,7 @@
      element. Every control that carries the shared classes below — in the
      bottom bar and in the full screen view — stays in sync automatically,
      since they all read from and act on this one piece of state. */
-  const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+  const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain", church:"img-church" };
   const mediaArt = {
     cross:"https://images.unsplash.com/photo-1672357867189-7f25eace961f?w=512&q=70&fm=jpg&fit=crop&auto=format",
     sprout:"https://images.unsplash.com/photo-1542005638-c3507d86bbc9?w=512&q=70&fm=jpg&fit=crop&auto=format",
@@ -437,8 +437,9 @@
       state.epId = epId || null;
       ["nowTitle","fsTitle"].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = title; });
       ["nowVerse","fsVerse"].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = verse; });
+      const smCls = { cross:"img-cross-sm", church:"img-church-sm" };
       const bigCls = iconClass[img] || "img-cross";
-      const smallCls = img === "cross" ? "img-cross-sm" : bigCls;
+      const smallCls = smCls[img] || bigCls;
       const cover = document.getElementById("nowCover");
       if(cover) cover.className = "now-cover " + smallCls;
       const art = document.getElementById("fsArt");

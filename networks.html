@@ -101,7 +101,7 @@
     const B = window.BB;
     const user = BBLayout.init("networks", { topAction:{ label:"New network", icon:"plus", onClick: () => openNetModal() } });
     if(user){
-      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
+      const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain", church:"img-church" };
       const tabs = document.getElementById("topicTabs");
       let currentTopicId = null;
 
@@ -181,7 +181,7 @@
       function renderTabsAndTopic(topicId){ renderTabs(); renderTopic(topicId); }
 
       /* ---- new network modal ---- */
-      const artOptions = ["cross","sprout","heart","door","mountain"];
+      const artOptions = ["cross","sprout","heart","door","mountain","church"];
       let selectedNetArt = "cross";
       const netArtPick = document.getElementById("netArtPick");
       netArtPick.innerHTML = artOptions.map(a => '<button type="button" class="art-swatch '+iconClass[a]+(a==="cross"?" selected":"")+'" data-art="'+a+'"></button>').join("");

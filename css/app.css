@@ -27,6 +27,8 @@
   --img-heart:url('https://images.unsplash.com/photo-1611434591878-56a2a4fac5f3?w=500&q=70&fm=jpg&fit=crop&auto=format');
   --img-door:url('https://images.unsplash.com/photo-1723713296731-a82e99a1873e?w=500&q=70&fm=jpg&fit=crop&auto=format');
   --img-mountain:url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500&q=70&fm=jpg&fit=crop&auto=format');
+  --img-church:url('../assets/img/dont-be-discouraged-church.jpg');
+  --img-church-sm:url('../assets/img/dont-be-discouraged-church-sm.jpg');
 }
 
 *{box-sizing:border-box}
@@ -50,6 +52,8 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 .img-heart{background:var(--img-heart) center/cover no-repeat}
 .img-door{background:var(--img-door) center/cover no-repeat}
 .img-mountain{background:var(--img-mountain) center/cover no-repeat}
+.img-church{background:var(--img-church) center/cover no-repeat}
+.img-church-sm{background:var(--img-church-sm) center/cover no-repeat}
 
 /* APP SHELL */
 .app{
@@ -263,7 +267,7 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   width:185px;height:183px;flex:0 0 185px;border-radius:12px;
   background:
     linear-gradient(180deg,rgba(6,7,12,.18),rgba(6,7,11,.86)),
-    var(--img-cross-sm) center 25%/cover no-repeat;
+    var(--img-church-sm) center 30%/cover no-repeat;
   position:relative;display:grid;place-items:center;text-align:center;
   border:1px solid rgba(255,255,255,.06);overflow:hidden;
 }
