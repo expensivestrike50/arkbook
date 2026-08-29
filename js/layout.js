@@ -246,11 +246,39 @@
      since they all read from and act on this one piece of state. */
   const iconClass = { cross:"img-cross", sprout:"img-sprout", heart:"img-heart", door:"img-door", mountain:"img-mountain" };
 
+  /* Playback survives navigation between pages (a fresh page load, since
+     this is a static multi-page app with no client-side router) by saving
+     which episode is playing, at what position, to localStorage on every
+     play/pause/seek, and resuming it — in whichever player is present on
+     the page that loads next, usually the bottom taskbar bar — as soon as
+     the new page's player wires up. */
+  const NOW_PLAYING_KEY = "bb_now_playing";
+  function clearPersistedPlayback(){
+    try{ localStorage.removeItem(NOW_PLAYING_KEY); }catch(e){}
+  }
+  window.BB_clearPersistedPlayback = clearPersistedPlayback;
+
   function wirePlayer(){
-    const state = { playing:false, progress:32, duration:123, mode:"demo" };
+    const state = { playing:false, progress:32, duration:123, mode:"demo", epId:null };
     let timer = null;
     const audioEl = document.getElementById("bbAudio");
     if(!audioEl) return;
+
+    let lastPersist = 0;
+    function persistPlayback(force){
+      if(!state.epId) return;
+      const now = Date.now();
+      if(!force && now - lastPersist < 1000) return;
+      lastPersist = now;
+      try{
+        localStorage.setItem(NOW_PLAYING_KEY, JSON.stringify(
+          state.mode === "real"
+            ? { epId:state.epId, mode:"real", currentTime:audioEl.currentTime||0, playing:!audioEl.paused && !audioEl.ended }
+            : { epId:state.epId, mode:"demo", currentTime:state.progress, playing:state.playing }
+        ));
+      }catch(e){}
+    }
+    window.BB_currentEpisodeId = function(){ return state.epId; };
 
     function fillsAndTimes(){
       return {
@@ -303,6 +331,7 @@
         state.progress = Math.round(Math.max(0, Math.min(1,frac)) * state.duration);
         updateDemo();
       }
+      persistPlayback(true);
     }
 
     function skip(seconds){
@@ -313,6 +342,7 @@
         state.progress = Math.max(0, Math.min(state.duration, state.progress+seconds));
         updateDemo();
       }
+      persistPlayback(true);
     }
 
     window.togglePlay = function(){
@@ -325,11 +355,13 @@
       if(state.playing){
         timer = setInterval(()=>{
           state.progress += 1;
-          if(state.progress >= state.duration){ state.progress = 0; state.playing = false; clearInterval(timer); }
+          if(state.progress >= state.duration){ state.progress = 0; state.playing = false; clearInterval(timer); clearPersistedPlayback(); }
           updateDemo();
+          persistPlayback();
         },1000);
       }
       updateDemo();
+      persistPlayback(true);
     };
 
     document.querySelectorAll(".play-toggle").forEach(btn => btn.addEventListener("click", window.togglePlay));
@@ -339,16 +371,26 @@
       seekTo((e.clientX-rect.left)/rect.width);
     }));
 
-    ["timeupdate","play","pause","ended","loadedmetadata"].forEach(ev => {
-      audioEl.addEventListener(ev, () => { if(state.mode === "real") updateReal(); });
+    ["timeupdate","play","pause","loadedmetadata"].forEach(ev => {
+      audioEl.addEventListener(ev, () => {
+        if(state.mode !== "real") return;
+        updateReal();
+        persistPlayback(ev === "play" || ev === "pause");
+      });
     });
+    audioEl.addEventListener("ended", () => { if(state.mode === "real") clearPersistedPlayback(); });
 
-    /* seconds: play the built in simulated demo track.
+    /* epId: the episode's id, used to persist and resume playback across
+       page navigations (see NOW_PLAYING_KEY above) — null for callers that
+       don't need that (there are none left, but it stays optional).
+       seconds: play the built in simulated demo track.
        audioSrc: play a real audio file (a static URL or an uploaded blob
        object URL). autoplay defaults to true; pass false to just load and
        show the right duration without starting playback. img is one of
-       the theme keys (cross, sprout, heart, door, mountain). */
-    window.setNowPlaying = function(title, verse, seconds, audioSrc, autoplay, img){
+       the theme keys (cross, sprout, heart, door, mountain).
+       startAt: seconds/progress to resume from instead of starting at 0. */
+    window.setNowPlaying = function(epId, title, verse, seconds, audioSrc, autoplay, img, startAt){
+      state.epId = epId || null;
       ["nowTitle","fsTitle"].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = title; });
       ["nowVerse","fsVerse"].forEach(id => { const el=document.getElementById(id); if(el) el.textContent = verse; });
       const bigCls = iconClass[img] || "img-cross";
@@ -364,20 +406,39 @@
       if(audioSrc){
         state.mode = "real";
         audioEl.src = audioSrc;
-        audioEl.currentTime = 0;
+        audioEl.currentTime = startAt || 0;
         if(autoplay !== false) audioEl.play().catch(()=>{});
         updateReal();
       } else {
         state.mode = "demo";
         audioEl.removeAttribute("src");
         state.duration = seconds || 123;
-        state.progress = 0;
+        state.progress = startAt || 0;
         state.playing = false;
         updateDemo();
       }
     };
 
     updateDemo();
+
+    /* Resume whatever was playing on the previous page, if anything. */
+    (function resume(){
+      let saved;
+      try{ saved = JSON.parse(localStorage.getItem(NOW_PLAYING_KEY) || "null"); }catch(e){ saved = null; }
+      if(!saved || !saved.epId) return;
+      const ep = B.getAllEpisodes().find(e => e.id === saved.epId);
+      if(!ep) { clearPersistedPlayback(); return; }
+      window.playEpisode(ep, false).then(() => {
+        if(state.mode === "real"){
+          audioEl.currentTime = saved.currentTime || 0;
+          if(saved.playing) audioEl.play().catch(()=>{});
+        } else {
+          state.progress = saved.currentTime || 0;
+          updateDemo();
+          if(saved.playing) window.togglePlay();
+        }
+      });
+    })();
   }
 
   /* Plays any episode object in the bottom player: a shipped static audio
@@ -386,14 +447,14 @@
      starting playback (used to prime the home page hero on load). */
   window.playEpisode = async function(ep, autoplay){
     if(ep.audioUrl){
-      window.setNowPlaying(ep.title, ep.verse, null, ep.audioUrl, autoplay, ep.img);
+      window.setNowPlaying(ep.id, ep.title, ep.verse, null, ep.audioUrl, autoplay, ep.img);
     } else if(ep.audioId){
       const blob = await B.Audio.get(ep.audioId);
       if(!blob){ showToast("Audio not found in this browser", "alert-circle"); return; }
       const url = URL.createObjectURL(blob);
-      window.setNowPlaying(ep.title, ep.verse, null, url, autoplay, ep.img);
+      window.setNowPlaying(ep.id, ep.title, ep.verse, null, url, autoplay, ep.img);
     } else {
-      window.setNowPlaying(ep.title, ep.verse, ep.seconds, null, true, ep.img);
+      window.setNowPlaying(ep.id, ep.title, ep.verse, ep.seconds, null, true, ep.img);
     }
   };
 
@@ -581,7 +642,7 @@
       if(opts.hidePlayer){
         document.getElementById("playerMount").style.display = "none";
         const app = document.querySelector(".app");
-        if(app) app.style.paddingBottom = "0";
+        if(app) app.classList.add("no-player");
       }
 
       const slot = document.getElementById("topActionSlot");
@@ -601,6 +662,7 @@
       });
       document.addEventListener("click", () => document.getElementById("profileMenu").classList.remove("open"));
       document.getElementById("signOutBtn").addEventListener("click", () => {
+        clearPersistedPlayback();
         B.Auth.logout();
         location.href = "index.html";
       });

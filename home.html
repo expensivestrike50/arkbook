@@ -112,6 +112,19 @@
     const B = window.BB;
     const user = BBLayout.init("home", { hidePlayer:true });
     if(user){
+      // If something other than today's devotional is already playing
+      // (resumed from another page), the hero can't show it — it's a
+      // fixed preview of today's episode — so reveal the taskbar player
+      // instead of hiding it, so playback stays visible and controllable.
+      let resumingId = null;
+      try{ resumingId = (JSON.parse(localStorage.getItem("bb_now_playing")||"null")||{}).epId; }catch(e){}
+      if(resumingId && resumingId !== "ep1"){
+        const pm = document.getElementById("playerMount");
+        const app = document.querySelector(".app");
+        if(pm) pm.style.display = "";
+        if(app) app.classList.remove("no-player");
+      }
+
       // waveform
       const wave = document.getElementById("wave");
       const heights = [12,18,23,30,19,35,42,29,47,36,55,42,31,48,57,38,28,44,39,51,34,25,19,33,41,29,22,18,26,35,20,17,28,24,18,22,13,18,25,16,11,20,16,13,18,12,10,14,8,13,11,9,12,7,10,8,6,10,7,8,6,9,5,7,6,8,5,6,5,7,5,6,4,5,4,6,4,5,3,4];
@@ -168,10 +181,11 @@
       renderEpisodes();
       window.onDataChanged = renderEpisodes;
 
-      // preload today's devotional so the hero and bottom player already
-      // show its real duration, ready to play without an extra click
+      // preload today's devotional so the hero already shows its real
+      // duration, ready to play without an extra click — but not if
+      // something is already resuming here from another page
       const todaysEpisode = B.EPISODES.find(e => e.id === "ep1");
-      if(todaysEpisode) window.playEpisode(todaysEpisode, false);
+      if(todaysEpisode && !resumingId) window.playEpisode(todaysEpisode, false);
 
       // scripture network preview (Forgiveness topic)
       const topic = B.getTopic("forgiveness");
