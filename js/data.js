@@ -195,7 +195,8 @@
   /* --------------------------- Static content --------------------------- */
 
   const EPISODES = [
-    { id:"ep1", title:"Don’t Become What Hurt You", verse:"Romans 12:21", duration:"2:50", seconds:170, date:"2025-05-28", topic:"forgiveness", img:"cross", desc:"What happened to you should teach you, not turn you into someone you were never meant to become.", audioUrl:"assets/audio/dont-become-what-hurt-you.mp3" },
+    { id:"ep1", title:"Don’t Be Discouraged Because You’re Not There Yet", verse:"Philippians 3:13–14", duration:"3:21", seconds:201, date:"2025-05-29", topic:"process", img:"sprout", desc:"You are not behind. You are exactly where the process has you, and the process is not finished.", audioUrl:"assets/audio/dont-be-discouraged-not-there-yet.mp3" },
+    { id:"ep13", title:"Don’t Become What Hurt You", verse:"Romans 12:21", duration:"2:50", seconds:170, date:"2025-05-16", topic:"forgiveness", img:"cross", desc:"What happened to you should teach you, not turn you into someone you were never meant to become.", audioUrl:"assets/audio/dont-become-what-hurt-you.mp3" },
     { id:"ep2", title:"When God Makes You Wait", verse:"Psalm 27:14", duration:"2:11", seconds:131, date:"2025-05-27", topic:"waiting", img:"sprout", desc:"Waiting is not wasted time. It is where God builds what a rushed answer never could." },
     { id:"ep3", title:"Guard Your Heart", verse:"Proverbs 4:23", duration:"1:58", seconds:118, date:"2025-05-26", topic:"trust", img:"heart", desc:"Everything you do flows from your heart. Protecting it is not selfish, it is wise." },
     { id:"ep4", title:"Forgiveness Doesn’t Mean Access", verse:"Ephesians 4:31–32", duration:"2:07", seconds:127, date:"2025-05-25", topic:"forgiveness", img:"door", desc:"You can release someone from bitterness without reopening a door that hurt you." },
@@ -263,7 +264,15 @@
     "Psalm 100:4": { ref:"Psalm 100:4", text:"Enter into his gates with thanksgiving, and into his courts with praise: be thankful unto him, and bless his name." },
     "Colossians 3:17": { ref:"Colossians 3:17", text:"And whatsoever ye do in word or deed, do all in the name of the Lord Jesus, giving thanks to God and the Father by him." },
     "Psalm 107:1": { ref:"Psalm 107:1", text:"O give thanks unto the LORD, for he is good: for his mercy endureth for ever." },
-    "Ephesians 5:20": { ref:"Ephesians 5:20", text:"Giving thanks always for all things unto God and the Father in the name of our Lord Jesus Christ." }
+    "Ephesians 5:20": { ref:"Ephesians 5:20", text:"Giving thanks always for all things unto God and the Father in the name of our Lord Jesus Christ." },
+
+    "Philippians 3:13–14": { ref:"Philippians 3:13–14", text:"Brethren, I count not myself to have apprehended: but this one thing I do, forgetting those things which are behind, and reaching forth unto those things which are before, I press toward the mark for the prize of the high calling of God in Christ Jesus." },
+    "Philippians 3:12–14": { ref:"Philippians 3:12–14", text:"Not as though I had already attained, either were already perfect: but I follow after, if that I may apprehend that for which also I am apprehended of Christ Jesus. Brethren, I count not myself to have apprehended: but this one thing I do, forgetting those things which are behind, and reaching forth unto those things which are before, I press toward the mark for the prize of the high calling of God in Christ Jesus." },
+    "Zechariah 4:10": { ref:"Zechariah 4:10", text:"For who hath despised the day of small things? for they shall rejoice, and shall see the plummet in the hand of Zerubbabel with those seven; they are the eyes of the LORD, which run to and fro through the whole earth." },
+    "Mark 4:26–29": { ref:"Mark 4:26–29", text:"And he said, So is the kingdom of God, as if a man should cast seed into the ground; And should sleep, and rise night and day, and the seed should spring and grow up, he knoweth not how. For the earth bringeth forth fruit of herself; first the blade, then the ear, after that the full corn in the ear. But when the fruit is brought forth, immediately he putteth in the sickle, because the harvest is come." },
+    "Proverbs 4:18": { ref:"Proverbs 4:18", text:"But the path of the just is as the shining light, that shineth more and more unto the perfect day." },
+    "2 Corinthians 3:18": { ref:"2 Corinthians 3:18", text:"But we all, with open face beholding as in a glass the glory of the Lord, are changed into the same image from glory to glory, even as by the Spirit of the Lord." },
+    "Galatians 6:9": { ref:"Galatians 6:9", text:"And let us not be weary in well doing: for in due season we shall reap, if we faint not." }
   };
 
   const TOPICS = [
@@ -290,7 +299,10 @@
       verses:["2 Timothy 1:7","1 Corinthians 16:13","Psalm 27:1","Joshua 1:6","Psalm 31:24"] },
     { id:"gratitude", name:"Gratitude", icon:"sparkles", color:"", img:"heart", count:5,
       desc:"Naming what is good out loud, especially on the hard days.",
-      verses:["1 Thessalonians 5:18","Psalm 100:4","Colossians 3:17","Psalm 107:1","Ephesians 5:20"] }
+      verses:["1 Thessalonians 5:18","Psalm 100:4","Colossians 3:17","Psalm 107:1","Ephesians 5:20"] },
+    { id:"process", name:"Pressing Forward", icon:"trending-up", color:"teal", img:"sprout", count:6,
+      desc:"You are not behind. Growth that lasts is never instant.",
+      verses:["Philippians 3:12–14","Zechariah 4:10","Mark 4:26–29","Proverbs 4:18","2 Corinthians 3:18","Galatians 6:9"] }
   ];
 
   /* ---------------------------- User networks -------------------------------

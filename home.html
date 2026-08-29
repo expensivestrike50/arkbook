@@ -27,16 +27,16 @@
 
             <div class="hero-main">
               <div class="cover">
-                <div class="cover-text">DON’T<br>BECOME<br>WHAT HURT<br>YOU</div>
-                <div class="cover-verse">ROMANS 12:21</div>
+                <div class="cover-text">DON’T<br>BE<br>DISCOURAGED</div>
+                <div class="cover-verse">PHILIPPIANS 3:13-14</div>
               </div>
               <div class="episode-info">
-                <h1>Don’t Become What<br>Hurt You</h1>
+                <h1>Don’t Be Discouraged<br>Because You’re Not There Yet</h1>
                 <div class="meta">
-                  <span><i data-lucide="book-open"></i>Romans 12:21</span>
-                  <span><i data-lucide="clock-3"></i>2:50</span>
+                  <span><i data-lucide="book-open"></i>Philippians 3:13-14</span>
+                  <span><i data-lucide="clock-3"></i>3:21</span>
                 </div>
-                <p>What happened to you should teach you, not turn you into someone you were never meant to become.</p>
+                <p>You are not behind. You are exactly where the process has you, and the process is not finished.</p>
               </div>
             </div>
 
@@ -45,7 +45,7 @@
               <button class="skip-btn" data-skip="-15"><i data-lucide="rotate-ccw"></i><small>15</small></button>
               <div class="wave-wrap">
                 <div class="wave progress-track" id="wave"></div>
-                <div class="wave-times"><span class="time-current">0:00</span><span class="time-duration">2:50</span></div>
+                <div class="wave-times"><span class="time-current">0:00</span><span class="time-duration">3:21</span></div>
               </div>
               <button class="skip-btn" data-skip="15"><i data-lucide="rotate-cw"></i><small>15</small></button>
             </div>
@@ -71,8 +71,8 @@
         <aside class="rightcol">
           <section class="panel side-card verse-card">
             <h3><i data-lucide="sun"></i>Verse of the Day</h3>
-            <div class="verse-quote">Do not be overcome by evil,<br>but overcome evil with good.</div>
-            <div class="side-link" id="votdLink">Romans 12:21</div>
+            <div class="verse-quote">Forgetting what is behind, and reaching toward what is ahead, I press toward the goal.</div>
+            <div class="side-link" id="votdLink">Philippians 3:13-14</div>
             <div class="small-actions" id="votdActions">
               <i data-lucide="bookmark" id="votdBookmark"></i>
               <i data-lucide="share-2" id="votdShare"></i>
@@ -212,8 +212,8 @@
       const todaysEpisode = B.EPISODES.find(e => e.id === "ep1");
       if(todaysEpisode && !resumingId) window.playEpisode(todaysEpisode, false);
 
-      // scripture network preview (Forgiveness topic)
-      const topic = B.getTopic("forgiveness");
+      // scripture network preview (today's topic)
+      const topic = B.getTopic("process");
       const gm = document.getElementById("graphMount");
       B.renderGraph(gm, topic, { compact:true });
 
@@ -221,20 +221,22 @@
       // Wired on the stable container (not the icons themselves) with event
       // delegation, since lucide.createIcons() replaces <i> with <svg> every
       // time it runs and would otherwise silently drop direct listeners.
-      document.getElementById("votdLink").addEventListener("click", () => window.openVerseModal("Romans 12:21"));
+      const votdRef = "Philippians 3:13–14";
+      document.getElementById("votdLink").addEventListener("click", () => window.openVerseModal(votdRef));
       function refreshVotdBookmark(){
-        document.getElementById("votdBookmark").classList.toggle("active", B.Store.isBookmarked("Romans 12:21"));
+        document.getElementById("votdBookmark").classList.toggle("active", B.Store.isBookmarked(votdRef));
       }
       document.getElementById("votdActions").addEventListener("click", (e) => {
+        const votdText = B.getVerse(votdRef).text;
         if(e.target.closest("#votdBookmark")){
-          B.Store.toggleBookmark({ type:"verse", ref:"Romans 12:21", title:"Romans 12:21", snippet:"Be not overcome of evil, but overcome evil with good." });
+          B.Store.toggleBookmark({ type:"verse", ref:votdRef, title:votdRef, snippet:votdText });
           refreshVotdBookmark();
-          BBLayout.showToast(B.Store.isBookmarked("Romans 12:21") ? "Verse bookmarked" : "Removed bookmark");
+          BBLayout.showToast(B.Store.isBookmarked(votdRef) ? "Verse bookmarked" : "Removed bookmark");
         } else if(e.target.closest("#votdShare")){
-          if(navigator.clipboard) navigator.clipboard.writeText("Be not overcome of evil, but overcome evil with good. — Romans 12:21").catch(()=>{});
+          if(navigator.clipboard) navigator.clipboard.writeText(votdText + " — " + votdRef).catch(()=>{});
           BBLayout.showToast("Verse copied to share");
         } else if(e.target.closest("#votdOpen")){
-          window.openVerseModal("Romans 12:21");
+          window.openVerseModal(votdRef);
         }
       });
       refreshVotdBookmark();
