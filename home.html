@@ -22,6 +22,7 @@
             <div class="hero-head">
               <div class="hero-title">Today’s Devotional</div>
               <div class="badge">New Episode</div>
+              <button class="hero-fullview-btn" id="heroFullViewBtn" title="Full screen player"><i data-lucide="maximize-2"></i><span>Full view</span></button>
             </div>
 
             <div class="hero-main">
@@ -123,6 +124,25 @@
         const app = document.querySelector(".app");
         if(pm) pm.style.display = "";
         if(app) app.classList.remove("no-player");
+      }
+
+      // "Full view" button on the hero: hidden until the devotional is
+      // actually playing, then opens the same full screen player the
+      // taskbar uses (mirrors the hero's play icon via a MutationObserver
+      // so it also reacts to resumed/already-playing state, not just clicks).
+      const heroPlayBtn = document.querySelector(".hero .play-toggle");
+      const heroFullViewBtn = document.getElementById("heroFullViewBtn");
+      if(heroPlayBtn && heroFullViewBtn){
+        const syncHeroFullView = () => {
+          const icon = heroPlayBtn.querySelector("[data-lucide]");
+          heroFullViewBtn.classList.toggle("show", !!icon && icon.getAttribute("data-lucide") === "pause");
+        };
+        new MutationObserver(syncHeroFullView).observe(heroPlayBtn, { childList:true, subtree:true, attributes:true });
+        heroFullViewBtn.addEventListener("click", () => {
+          const fsBtn = document.getElementById("fsOpenBtn");
+          if(fsBtn) fsBtn.click();
+        });
+        syncHeroFullView();
       }
 
       // waveform

@@ -47,6 +47,7 @@
 
   function topbarHTML(){
     return (
+      '<button class="icon-btn menu-toggle" id="menuToggleBtn" aria-label="Menu"><i data-lucide="menu"></i></button>' +
       '<label class="search">' +
         '<i data-lucide="search"></i>' +
         '<input id="searchInput" autocomplete="off" placeholder="Search episodes, verses, topics, channels" />' +
@@ -522,6 +523,33 @@
     });
   }
 
+  /* On narrow screens the sidebar is off canvas by default; the hamburger
+     button in the topbar slides it in as an overlay with a tap-to-close
+     backdrop behind it. */
+  function wireMobileMenu(){
+    const toggleBtn = document.getElementById("menuToggleBtn");
+    const sidebar = document.getElementById("sidebarMount");
+    const backdrop = document.getElementById("sidebarBackdrop");
+    if(!toggleBtn || !sidebar || !backdrop) return;
+
+    function close(){
+      sidebar.classList.remove("mobile-open");
+      backdrop.classList.remove("show");
+    }
+    function open(){
+      sidebar.classList.add("mobile-open");
+      backdrop.classList.add("show");
+    }
+
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sidebar.classList.contains("mobile-open") ? close() : open();
+    });
+    backdrop.addEventListener("click", close);
+    sidebar.addEventListener("click", (e) => { if(e.target.closest(".nav-item")) close(); });
+    window.addEventListener("keydown", (e) => { if(e.key === "Escape") close(); });
+  }
+
   /* ------------------------------ Modals ---------------------------------- */
   function openModal(id){ document.getElementById(id).classList.add("open"); }
   function closeModal(id){ document.getElementById(id).classList.remove("open"); }
@@ -636,6 +664,7 @@
       document.body.insertAdjacentHTML("beforeend", fsPlayerHTML());
       document.body.insertAdjacentHTML("beforeend", playerTabHTML());
       document.body.insertAdjacentHTML("beforeend", modalsHTML());
+      document.body.insertAdjacentHTML("beforeend", '<div class="sidebar-backdrop" id="sidebarBackdrop"></div>');
 
       /* Home has its own full sized player in the hero, so the bottom bar
          (and its hide/show tab) would just be a redundant duplicate there. */
@@ -672,6 +701,7 @@
       wirePlayer();
       wireFullscreen();
       wirePlayerVisibility();
+      wireMobileMenu();
 
       if(window.lucide) lucide.createIcons();
       return user;

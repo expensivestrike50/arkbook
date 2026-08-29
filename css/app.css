@@ -182,6 +182,7 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 .sr-item span{font-size:10px;color:#8d8a99}
 .sr-empty{padding:16px 10px;text-align:center;font-size:12px;color:#8d8a99}
 
+#menuToggleBtn{display:none;flex:0 0 34px}
 .top-actions{display:flex;align-items:center;gap:16px;flex:0 0 auto}
 .icon-btn{
   width:34px;height:34px;border-radius:8px;border:0;background:transparent;
@@ -245,6 +246,15 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
 .badge{
   font-size:10px;color:#d4bdf6;padding:5px 8px;border-radius:6px;background:#3b2456;
 }
+.hero-fullview-btn{
+  margin-left:auto;height:30px;padding:0 12px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.16);background:rgba(10,11,18,.55);backdrop-filter:blur(6px);
+  color:#e7e4f0;display:none;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:600;
+  opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease,background .2s ease;
+}
+.hero-fullview-btn.show{display:flex;opacity:1;transform:translateY(0)}
+.hero-fullview-btn:hover{background:rgba(10,11,18,.85);color:#fff}
+.hero-fullview-btn svg{width:14px}
 .hero-main{
   position:relative;z-index:2;display:flex;gap:22px;padding:28px 28px 0;
   align-items:center;
@@ -784,9 +794,26 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   .bottom-player{grid-template-columns:220px 1fr 110px}
   .search{width:min(365px,55vw)}
 }
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(3,4,8,.6);z-index:65}
 @media (max-width:720px){
   :root{--sidebar:0px}
   .sidebar{display:none}
+  .sidebar.mobile-open{
+    display:flex;width:240px;z-index:70;
+    box-shadow:0 0 50px rgba(0,0,0,.55);
+  }
+  /* the docked desktop sidebar collapses to icon-only under 980px; the
+     mobile drawer has room to spare, so show it full width with labels */
+  .sidebar.mobile-open .brand-copy{display:block}
+  .sidebar.mobile-open .nav-item span{display:inline}
+  .sidebar.mobile-open .count{display:grid}
+  .sidebar.mobile-open .profile-text{display:block}
+  .sidebar.mobile-open .profile .chev{display:inline-block}
+  .sidebar.mobile-open .brand{justify-content:flex-start;padding-left:7px;padding-right:7px}
+  .sidebar.mobile-open .nav-item{justify-content:flex-start;padding:0 14px}
+  .sidebar.mobile-open .profile{justify-content:flex-start}
+  .sidebar-backdrop.show{display:block}
+  #menuToggleBtn{display:grid}
   .app{display:block}
   .main{padding:12px}
   .search{width:100%}
@@ -818,6 +845,9 @@ img.bb-thumb{width:100%;height:100%;object-fit:cover;display:block}
   #graphActions .ghost-btn span{display:none}
   #graphActions .ghost-btn{padding:0 10px}
   .art-swatch{width:36px;height:36px}
+  .hero-head{flex-wrap:wrap;row-gap:8px}
+  .hero-fullview-btn span{display:none}
+  .hero-fullview-btn{padding:0 9px}
 }
 @media (max-width:480px){
   .episode-grid,.episode-grid.full{grid-template-columns:1fr}
