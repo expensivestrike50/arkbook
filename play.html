@@ -16,7 +16,8 @@
       radial-gradient(circle at 50% 15%, rgba(103,62,189,.22), transparent 45%),
       linear-gradient(180deg,#0c0d16 0%, #08090f 100%);
   }
-  .share-main{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;width:100%;box-sizing:border-box}
+  .share-main{flex:1;display:flex;flex-direction:column;align-items:center;padding:64px 20px 60px;width:100%;box-sizing:border-box}
+  .share-stack{width:100%;max-width:600px;display:flex;flex-direction:column;align-items:center;gap:34px}
   .share-desc{font-size:12px;color:#c6c2cc;line-height:1.6;max-width:420px;margin:22px auto 0;text-align:center}
   .share-note{font-size:11px;color:#8d8a99;margin-top:14px;text-align:center}
   .share-notfound{color:#c6c2cc;text-align:center;max-width:340px}
@@ -38,29 +39,100 @@
   .art-network .gnode.center .label{font-size:12.5px}
   .art-network .gnode[data-ref]{cursor:pointer}
   .modal-head h2{font-family:"Roboto Slab",serif}
+
+  /* All-episodes toggle */
+  .episodes-toggle-btn{
+    position:fixed;top:20px;right:20px;z-index:40;
+    height:36px;padding:0 15px;border-radius:20px;border:1px solid rgba(255,255,255,.14);
+    background:rgba(15,16,26,.72);backdrop-filter:blur(8px);color:#e7e4f0;
+    display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;cursor:pointer;
+  }
+  .episodes-toggle-btn:hover{background:rgba(15,16,26,.94);color:#fff}
+  .episodes-toggle-btn svg{width:14px}
+  .ep-list{max-height:62vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin:-4px -6px}
+  .ep-list-row{display:flex;align-items:center;gap:12px;padding:9px 6px;border-radius:10px;text-decoration:none;color:inherit}
+  .ep-list-row:hover{background:rgba(255,255,255,.05)}
+  .ep-list-row.active{background:rgba(139,76,246,.16)}
+  .ep-list-thumb{width:40px;height:40px;border-radius:8px;flex:0 0 40px}
+  .ep-list-body{flex:1;min-width:0}
+  .ep-list-body strong{display:block;font-size:12.5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ep-list-body span{font-size:11px;color:#8d8a99}
+  .ep-list-dur{font-size:10.5px;color:#8d8a99;flex:0 0 auto}
+
+  /* Discussion / anonymous chat */
+  .chat-panel{width:100%;text-align:left}
+  .chat-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .chat-head h3{font-family:"Roboto Slab",serif;font-size:15px;margin:0;color:#efe8fa;display:flex;align-items:center;gap:9px}
+  .chat-count{font-size:11px;font-weight:700;color:#c8b8ec;background:#221f33;padding:2px 9px;border-radius:99px}
+  .chat-compose{display:flex;gap:8px;margin-bottom:22px;align-items:flex-end}
+  .chat-compose textarea{
+    flex:1;background:#10111a;border:1px solid var(--line);border-radius:10px;color:#eeeaf4;
+    padding:10px 12px;font-size:12.5px;font-family:inherit;resize:vertical;min-height:40px;outline:0;
+  }
+  .chat-compose textarea:focus{border-color:rgba(150,90,255,.5)}
+  .chat-compose .primary-btn{flex:0 0 auto;height:40px}
+  .chat-empty{font-size:12px;color:#8d8a99;text-align:center;padding:22px 0}
+  .chat-comment{padding:14px 0;border-top:1px solid var(--line-2)}
+  .chat-comment:first-child{border-top:0}
+  .chat-comment-head{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+  .chat-comment-author{font-size:12.5px;font-weight:700;color:#e2ddef}
+  .chat-comment-time{font-size:10.5px;color:#767588}
+  .chat-comment-text{font-size:12.5px;line-height:1.55;color:#d3cfe0;margin:0 0 7px;white-space:pre-wrap;word-break:break-word}
+  .chat-reply-btn{background:none;border:0;color:#a682e8;font-size:11px;font-weight:600;cursor:pointer;padding:0}
+  .chat-reply-btn:hover{color:#c8aaff}
+  .chat-replies{margin-top:10px;margin-left:18px;padding-left:14px;border-left:1px solid var(--line-2);display:flex;flex-direction:column;gap:12px}
+  .chat-reply-compose{display:none;gap:8px;margin-top:10px;align-items:flex-end}
+  .chat-reply-compose.open{display:flex}
+  .chat-reply-compose textarea{
+    flex:1;background:#10111a;border:1px solid var(--line);border-radius:9px;color:#eeeaf4;
+    padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:34px;outline:0;
+  }
+  .chat-reply-compose:focus-within textarea{border-color:rgba(150,90,255,.5)}
+  .chat-reply-compose .ghost-btn{height:34px;padding:0 12px;font-size:11px;flex:0 0 auto}
+
+  @media (max-width:480px){
+    .share-main{padding-top:56px}
+    .chat-compose{flex-direction:column;align-items:stretch}
+    .chat-compose .primary-btn{width:100%;justify-content:center}
+    .episodes-toggle-btn span{display:none}
+    .episodes-toggle-btn{width:36px;padding:0;justify-content:center}
+  }
 </style>
 </head>
 <body>
+  <button class="episodes-toggle-btn" id="episodesToggleBtn"><i data-lucide="list-music"></i><span>All Episodes</span></button>
+
   <div class="share-main">
-    <div class="fs-inner" id="playerBox" style="display:none">
-      <div class="fs-art img-cross" id="art">
-        <div class="art-scrim"></div>
-        <div class="art-network" id="artNetwork"></div>
+    <div class="share-stack">
+      <div class="fs-inner" id="playerBox" style="display:none">
+        <div class="fs-art img-cross" id="art">
+          <div class="art-scrim"></div>
+          <div class="art-network" id="artNetwork"></div>
+        </div>
+        <div class="fs-wave" id="wave"></div>
+        <div class="fs-meta"><h2 id="epTitle"></h2><p id="epVerse"></p></div>
+        <div class="fs-progress">
+          <span class="time time-current">00:00</span>
+          <div class="track progress-track" id="track"><div class="track-fill"></div></div>
+          <span class="time time-duration">00:00</span>
+        </div>
+        <div class="fs-controls">
+          <button class="small-skip" data-skip="-15"><i data-lucide="rotate-ccw"></i><small>15</small></button>
+          <button class="play-lg" id="playBtn"><i data-lucide="play"></i></button>
+          <button class="small-skip" data-skip="15"><i data-lucide="rotate-cw"></i><small>15</small></button>
+        </div>
+        <p class="share-desc" id="epDesc"></p>
+        <p class="share-note" id="unavailableNote" style="display:none">This episode's audio was uploaded from a different browser or device, so it can't play here.</p>
       </div>
-      <div class="fs-wave" id="wave"></div>
-      <div class="fs-meta"><h2 id="epTitle"></h2><p id="epVerse"></p></div>
-      <div class="fs-progress">
-        <span class="time time-current">00:00</span>
-        <div class="track progress-track" id="track"><div class="track-fill"></div></div>
-        <span class="time time-duration">00:00</span>
-      </div>
-      <div class="fs-controls">
-        <button class="small-skip" data-skip="-15"><i data-lucide="rotate-ccw"></i><small>15</small></button>
-        <button class="play-lg" id="playBtn"><i data-lucide="play"></i></button>
-        <button class="small-skip" data-skip="15"><i data-lucide="rotate-cw"></i><small>15</small></button>
-      </div>
-      <p class="share-desc" id="epDesc"></p>
-      <p class="share-note" id="unavailableNote" style="display:none">This episode's audio was uploaded from a different browser or device, so it can't play here.</p>
+
+      <section class="panel chat-panel" id="chatPanel" style="display:none;padding:20px">
+        <div class="chat-head"><h3><i data-lucide="message-circle"></i>Discussion <span class="chat-count" id="chatCount">0</span></h3></div>
+        <div class="chat-compose">
+          <textarea id="chatInput" placeholder="Share your thoughts on this devotional..." rows="2"></textarea>
+          <button class="primary-btn" id="chatSendBtn"><i data-lucide="send"></i><span>Post</span></button>
+        </div>
+        <div class="chat-list" id="chatList"></div>
+      </section>
     </div>
 
     <div class="share-notfound" id="notFound" style="display:none">
@@ -70,11 +142,33 @@
     </div>
   </div>
 
+  <div class="modal" id="episodesModal">
+    <div class="modal-box wide">
+      <div class="modal-head"><h2>All Episodes</h2><button class="close-btn" data-close="episodesModal"><i data-lucide="x"></i></button></div>
+      <div class="ep-list" id="epList"></div>
+    </div>
+  </div>
+
   <div class="modal" id="verseModal">
     <div class="modal-box">
-      <div class="modal-head"><h2>Scripture</h2><button class="close-btn" id="verseModalClose"><i data-lucide="x"></i></button></div>
+      <div class="modal-head"><h2>Scripture</h2><button class="close-btn" data-close="verseModal"><i data-lucide="x"></i></button></div>
       <div class="verse-modal-ref" id="verseModalRef"></div>
       <div class="verse-modal-text" id="verseModalText"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="identityModal">
+    <div class="modal-box" style="width:min(380px,calc(100vw - 30px))">
+      <div class="modal-head"><h2>Pick a name to comment</h2><button class="close-btn" data-close="identityModal"><i data-lucide="x"></i></button></div>
+      <p style="font-size:12px;line-height:1.6;color:#c6c2cc;margin:0 0 16px">You'll comment under this name. No sign-in needed — it only lives in this browser.</p>
+      <div class="field full">
+        <label>Your name</label>
+        <input id="identityInput" />
+      </div>
+      <div class="form-actions">
+        <button class="ghost-btn" id="identityShuffleBtn"><i data-lucide="shuffle"></i><span>Shuffle</span></button>
+        <button class="primary-btn" id="identityConfirmBtn"><i data-lucide="check"></i><span>Start commenting</span></button>
+      </div>
     </div>
   </div>
 
@@ -87,23 +181,173 @@
     const params = new URLSearchParams(location.search);
     const ep = B.getAllEpisodes().find(e => e.id === params.get("ep"));
 
+    /* ---- generic modal open/close (verse, all-episodes, identity) ---- */
+    function openModal(id){ document.getElementById(id).classList.add("open"); }
+    function closeModal(id){ document.getElementById(id).classList.remove("open"); }
+    document.querySelectorAll("[data-close]").forEach(btn => {
+      btn.addEventListener("click", () => closeModal(btn.dataset.close));
+    });
+    document.querySelectorAll(".modal").forEach(m => {
+      m.addEventListener("click", (e) => { if(e.target === m) closeModal(m.id); });
+    });
+    window.addEventListener("keydown", (e) => {
+      if(e.key === "Escape") document.querySelectorAll(".modal.open").forEach(m => closeModal(m.id));
+    });
+
+    /* ---- all episodes toggle ---- */
+    function renderEpisodeList(){
+      const all = B.getAllEpisodes();
+      document.getElementById("epList").innerHTML = all.map(e => (
+        '<a class="ep-list-row' + (ep && e.id === ep.id ? " active" : "") + '" href="play.html?ep=' + encodeURIComponent(e.id) + '">' +
+          '<div class="ep-list-thumb ' + (iconClass[e.img] || "img-cross") + '"></div>' +
+          '<div class="ep-list-body"><strong>' + B.escapeHtml(e.title) + '</strong><span>' + B.escapeHtml(e.verse || "") + '</span></div>' +
+          '<span class="ep-list-dur">' + B.escapeHtml(e.duration || "") + '</span>' +
+        '</a>'
+      )).join("");
+      lucide.createIcons();
+    }
+    document.getElementById("episodesToggleBtn").addEventListener("click", () => {
+      renderEpisodeList();
+      openModal("episodesModal");
+    });
+
     /* Reading a verse never touches the <audio> element or its playback
        state below — opening/closing this modal is purely visual. */
-    const verseModal = document.getElementById("verseModal");
     function openVerse(ref){
       const v = B.getVerse(ref);
       document.getElementById("verseModalRef").textContent = v.ref;
       document.getElementById("verseModalText").textContent = v.text;
-      verseModal.classList.add("open");
+      openModal("verseModal");
     }
-    function closeVerse(){ verseModal.classList.remove("open"); }
     // renderGraph()'s nodes already call window.openVerseModal on click
     // (that's how the app's other pages wire theirs up) — hook into the
     // same convention instead of double-binding our own listener too.
     window.openVerseModal = openVerse;
-    document.getElementById("verseModalClose").addEventListener("click", closeVerse);
-    verseModal.addEventListener("click", (e) => { if(e.target === verseModal) closeVerse(); });
-    window.addEventListener("keydown", (e) => { if(e.key === "Escape") closeVerse(); });
+
+    /* ---- anonymous chat (per episode, this browser only — there is no
+       server, so comments are visible to anyone using this exact browser
+       profile, same as the rest of this app's localStorage-based data) ---- */
+    const CHAT_IDENTITY_KEY = "bb_chat_identity";
+    const CHAT_KEY = "bb_episode_chat";
+    const NAME_ADJ = ["Quiet","Faithful","Hopeful","Steadfast","Gentle","Bold","Humble","Grateful","Peaceful","Radiant","Patient","Joyful","Steady","Kind","Watchful"];
+    const NAME_NOUN = ["Wanderer","Pilgrim","Sparrow","Anchor","Lantern","Harbor","Ember","Dawn","River","Olive","Shepherd","Vessel","Branch","Dove","Cornerstone"];
+
+    function randomName(){
+      const a = NAME_ADJ[Math.floor(Math.random()*NAME_ADJ.length)];
+      const n = NAME_NOUN[Math.floor(Math.random()*NAME_NOUN.length)];
+      const num = Math.floor(Math.random()*90)+10;
+      return a + " " + n + " " + num;
+    }
+    function getIdentity(){ try{ return localStorage.getItem(CHAT_IDENTITY_KEY); }catch(e){ return null; } }
+    function setIdentity(name){ try{ localStorage.setItem(CHAT_IDENTITY_KEY, name); }catch(e){} }
+    function getChatStore(){ try{ return JSON.parse(localStorage.getItem(CHAT_KEY) || "{}"); }catch(e){ return {}; } }
+    function saveChatStore(obj){ try{ localStorage.setItem(CHAT_KEY, JSON.stringify(obj)); }catch(e){} }
+    function getComments(epId){ return getChatStore()[epId] || []; }
+    function addComment(epId, text, parentId){
+      const store = getChatStore();
+      if(!store[epId]) store[epId] = [];
+      store[epId].push({
+        id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+        author: getIdentity() || "Guest", text, ts: Date.now(), parentId: parentId || null
+      });
+      saveChatStore(store);
+    }
+    function timeAgo(ts){
+      const s = Math.max(1, Math.round((Date.now()-ts)/1000));
+      if(s < 60) return "just now";
+      const m = Math.round(s/60); if(m < 60) return m + "m ago";
+      const h = Math.round(m/60); if(h < 24) return h + "h ago";
+      return Math.round(h/24) + "d ago";
+    }
+
+    let pendingComment = null;
+    document.getElementById("identityShuffleBtn").addEventListener("click", () => {
+      document.getElementById("identityInput").value = randomName();
+    });
+    document.getElementById("identityConfirmBtn").addEventListener("click", () => {
+      const name = document.getElementById("identityInput").value.trim();
+      if(!name) return;
+      setIdentity(name);
+      closeModal("identityModal");
+      if(pendingComment){
+        addComment(ep.id, pendingComment.text, pendingComment.parentId);
+        pendingComment = null;
+        renderComments();
+      }
+    });
+
+    function requestPostComment(text, parentId){
+      text = (text || "").trim();
+      if(!text) return;
+      if(!getIdentity()){
+        pendingComment = { text, parentId };
+        document.getElementById("identityInput").value = randomName();
+        openModal("identityModal");
+        return;
+      }
+      addComment(ep.id, text, parentId);
+      renderComments();
+    }
+
+    function renderCommentHTML(c, all){
+      const replies = all.filter(r => r.parentId === c.id).sort((a,b) => a.ts - b.ts);
+      return (
+        '<div class="chat-comment" data-id="' + c.id + '">' +
+          '<div class="chat-comment-head"><span class="chat-comment-author">' + B.escapeHtml(c.author) + '</span><span class="chat-comment-time">' + timeAgo(c.ts) + '</span></div>' +
+          '<p class="chat-comment-text">' + B.escapeHtml(c.text) + '</p>' +
+          '<button class="chat-reply-btn" data-reply-to="' + c.id + '">Reply</button>' +
+          '<div class="chat-reply-compose" id="replyBox-' + c.id + '">' +
+            '<textarea placeholder="Reply to ' + B.escapeHtml(c.author) + '" rows="1"></textarea>' +
+            '<button class="ghost-btn" data-reply-send="' + c.id + '"><span>Reply</span></button>' +
+          '</div>' +
+          (replies.length ? '<div class="chat-replies">' + replies.map(r => (
+            '<div class="chat-comment" data-id="' + r.id + '">' +
+              '<div class="chat-comment-head"><span class="chat-comment-author">' + B.escapeHtml(r.author) + '</span><span class="chat-comment-time">' + timeAgo(r.ts) + '</span></div>' +
+              '<p class="chat-comment-text">' + B.escapeHtml(r.text) + '</p>' +
+            '</div>'
+          )).join("") + '</div>' : "") +
+        '</div>'
+      );
+    }
+
+    function wireCommentEvents(){
+      document.querySelectorAll("[data-reply-to]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const box = document.getElementById("replyBox-" + btn.dataset.replyTo);
+          document.querySelectorAll(".chat-reply-compose.open").forEach(b => { if(b !== box) b.classList.remove("open"); });
+          box.classList.toggle("open");
+          if(box.classList.contains("open")) box.querySelector("textarea").focus();
+        });
+      });
+      document.querySelectorAll("[data-reply-send]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const parentId = btn.dataset.replySend;
+          const textarea = document.getElementById("replyBox-" + parentId).querySelector("textarea");
+          requestPostComment(textarea.value, parentId);
+          textarea.value = "";
+        });
+      });
+    }
+
+    function renderComments(){
+      const comments = getComments(ep.id);
+      document.getElementById("chatCount").textContent = comments.length;
+      const top = comments.filter(c => !c.parentId).sort((a,b) => b.ts - a.ts);
+      const list = document.getElementById("chatList");
+      if(!top.length){
+        list.innerHTML = '<p class="chat-empty">No comments yet. Be the first to share what this devotional meant to you.</p>';
+        return;
+      }
+      list.innerHTML = top.map(c => renderCommentHTML(c, comments)).join("");
+      lucide.createIcons();
+      wireCommentEvents();
+    }
+
+    document.getElementById("chatSendBtn").addEventListener("click", () => {
+      const input = document.getElementById("chatInput");
+      requestPostComment(input.value, null);
+      input.value = "";
+    });
 
     if(!ep){
       document.getElementById("notFound").style.display = "block";
@@ -120,6 +364,9 @@
       if(topic && B.getTopicVerseRefs(topic).length){
         B.renderGraph(document.getElementById("artNetwork"), topic, { compact:true, rx:38, ry:38 });
       }
+
+      document.getElementById("chatPanel").style.display = "block";
+      renderComments();
 
       const wave = document.getElementById("wave");
       for(let i=0;i<56;i++){
